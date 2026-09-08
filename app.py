@@ -95,10 +95,10 @@ def load_all_models():
     """Scans saved_models folder and loads all available .joblib estimators."""
     model_mapping = {
         'Bayesian Ridge': 'best_traditional_ml_model',
-        'CatBoost Regularized': 'boosting_catboost_regularized',
-        'LightGBM Regularized': 'boosting_lightgbm_regularized',
-        'XGBoost Regularized': 'boosting_xgboost_regularized',
-        'Voting Regressor': 'voting_regressor'
+        'CatBoost': 'boosting_catboost_regularized',
+        'LightGBM': 'boosting_lightgbm_regularized',
+        'XGBoost': 'boosting_xgboost_regularized',
+        'Voting Reg.': 'voting_regressor'
     }
 
     failed_models = []
