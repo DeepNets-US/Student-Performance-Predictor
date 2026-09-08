@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 
 <head>
     <meta charset="UTF-8">
@@ -10,15 +10,83 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <style>
+        :root {
+            --bg-body: #f8f9fa;
+            --bg-card: #ffffff;
+            --bg-tertiary: #f8f9fa;
+            --bg-notice: #fff8e6;
+            --border-notice: #ffeba8;
+            --text-main: #212529;
+            --text-muted: #6c757d;
+            --border-color: #e9ecef;
+            --btn-toggle-bg: #ffffff;
+            --btn-toggle-color: #495057;
+            --btn-toggle-border: #dee2e6;
+            --chart-grid: #e9ecef;
+            --chart-tick: #6c757d;
+            --best-card-bg: linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%);
+            --highest-card-bg: linear-gradient(135deg, #f0fff4 0%, #ffffff 100%);
+
+            /* Grade Badge Variables (Light) */
+            --badge-a-bg: #d1e7dd;
+            --badge-a-text: #0f5132;
+            --badge-b-bg: #cff4fc;
+            --badge-b-text: #055160;
+            --badge-c-bg: #fff3cd;
+            --badge-c-text: #664d03;
+            --badge-d-bg: #ffe69c;
+            --badge-d-text: #856404;
+            --badge-f-bg: #f8d7da;
+            --badge-f-text: #842029;
+            --badge-err-bg: #e2e3e5;
+            --badge-err-text: #41464b;
+        }
+
+        [data-bs-theme="dark"] {
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --bg-tertiary: #0f172a;
+            --bg-notice: #1c2536;
+            --border-notice: #856404;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --btn-toggle-bg: #1e293b;
+            --btn-toggle-color: #cbd5e1;
+            --btn-toggle-border: #475569;
+            --chart-grid: #334155;
+            --chart-tick: #94a3b8;
+            --best-card-bg: linear-gradient(135deg, #1e3a8a 0%, #1e293b 100%);
+            --highest-card-bg: linear-gradient(135deg, #064e3b 0%, #1e293b 100%);
+
+            /* Grade Badge Variables (Dark) */
+            --badge-a-bg: #0f5132;
+            --badge-a-text: #d1e7dd;
+            --badge-b-bg: #055160;
+            --badge-b-text: #cff4fc;
+            --badge-c-bg: #664d03;
+            --badge-c-text: #fff3cd;
+            --badge-d-bg: #856404;
+            --badge-d-text: #ffe69c;
+            --badge-f-bg: #842029;
+            --badge-f-text: #f8d7da;
+            --badge-err-bg: #41464b;
+            --badge-err-text: #e2e3e5;
+        }
+
         body {
-            background-color: #f8f9fa;
+            background-color: var(--bg-body);
+            color: var(--text-main);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         .card {
-            border: none;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            color: var(--text-main);
         }
 
         .preset-btn {
@@ -39,33 +107,33 @@
         }
 
         .grade-A {
-            background-color: #d1e7dd;
-            color: #0f5132;
+            background-color: var(--badge-a-bg);
+            color: var(--badge-a-text);
         }
 
         .grade-B {
-            background-color: #cff4fc;
-            color: #055160;
+            background-color: var(--badge-b-bg);
+            color: var(--badge-b-text);
         }
 
         .grade-C {
-            background-color: #fff3cd;
-            color: #664d03;
+            background-color: var(--badge-c-bg);
+            color: var(--badge-c-text);
         }
 
         .grade-D {
-            background-color: #ffe69c;
-            color: #856404;
+            background-color: var(--badge-d-bg);
+            color: var(--badge-d-text);
         }
 
         .grade-F {
-            background-color: #f8d7da;
-            color: #842029;
+            background-color: var(--badge-f-bg);
+            color: var(--badge-f-text);
         }
 
         .grade-Error {
-            background-color: #e2e3e5;
-            color: #41464b;
+            background-color: var(--badge-err-bg);
+            color: var(--badge-err-text);
         }
 
         .btn-group-toggle .btn {
@@ -73,9 +141,9 @@
             margin-right: 4px;
             margin-bottom: 4px;
             font-weight: 500;
-            border: 1.5px solid #dee2e6;
-            background-color: #ffffff;
-            color: #495057;
+            border: 1.5px solid var(--btn-toggle-border);
+            background-color: var(--btn-toggle-bg);
+            color: var(--btn-toggle-color);
             transition: all 0.2s;
         }
 
@@ -101,27 +169,35 @@
 
         .range-bounds {
             font-size: 0.72rem;
-            color: #6c757d;
+            color: var(--text-muted);
         }
 
         .best-model-card {
             border: 2px solid #0d6efd;
-            background: linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%);
+            background: var(--best-card-bg);
             border-radius: 12px;
         }
 
         .highest-score-card {
             border: 2px solid #198754;
-            background: linear-gradient(135deg, #f0fff4 0%, #ffffff 100%);
+            background: var(--highest-card-bg);
             border-radius: 12px;
         }
 
         .chart-wrapper {
-            background: #ffffff;
+            background: var(--bg-card);
             border-radius: 12px;
-            padding: 16px;
-            border: 1px solid #e9ecef;
+            border: 1px solid var(--border-color);
             box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+            height: 320px;
+        }
+
+        .table-view-wrapper {
+            max-height: 320px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background: var(--bg-card);
         }
 
         .toggle-explorer-btn {
@@ -129,12 +205,41 @@
             padding: 10px 24px;
             font-weight: 600;
         }
+
+        .nav-pills .nav-link {
+            font-size: 0.825rem;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 6px;
+        }
+
+        .dark-mode-toggle {
+            position: absolute;
+            top: 20px;
+            right: 24px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .custom-tertiary {
+            background-color: var(--bg-tertiary) !important;
+        }
+
+        .custom-notice-card {
+            background-color: var(--bg-notice) !important;
+            border-color: var(--border-notice) !important;
+        }
     </style>
 </head>
 
 <body>
 
-    <div class="container-fluid px-4 py-4">
+    <div class="container-fluid px-4 py-4 position-relative">
+
+        <!-- Dark Mode Switcher Button -->
+        <button class="btn btn-sm btn-outline-secondary dark-mode-toggle" id="themeToggleBtn" onclick="toggleTheme()">
+            🌙 Dark Mode
+        </button>
 
         <!-- Header -->
         <div class="text-center mb-4">
@@ -372,38 +477,58 @@
 
                     </div>
 
-                    <!-- All Benchmark Models Table -->
-                    <h6 class="fw-bold mb-2 text-secondary">📊 Benchmark Models</h6>
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th scope="col">Model Name</th>
-                                    <th scope="col">Score (0-100)</th>
-                                    <th scope="col">Grade</th>
-                                </tr>
-                            </thead>
-                            <tbody id="predictionsTableBody">
-                            </tbody>
-                        </table>
+                    <!-- Section Header with View Mode Toggle Tabs -->
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="fw-bold mb-0 text-secondary">📊 Benchmark Performance</h6>
+                        <ul class="nav nav-pills custom-tertiary p-1 rounded border" id="viewToggleTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="radar-tab" data-bs-toggle="pill"
+                                    data-bs-target="#radarView" type="button" role="tab" aria-controls="radarView"
+                                    aria-selected="true">🕸️ Radar Chart</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="table-tab" data-bs-toggle="pill"
+                                    data-bs-target="#tableView" type="button" role="tab" aria-controls="tableView"
+                                    aria-selected="false">📋 Table</button>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Tab Content Area -->
+                    <div class="tab-content" id="viewToggleContent">
+
+                        <!-- Radar Chart Tab View -->
+                        <div class="tab-pane fade show active" id="radarView" role="tabpanel"
+                            aria-labelledby="radar-tab">
+                            <div class="chart-wrapper">
+                                <div style="height: 100%; position: relative;">
+                                    <canvas id="predictionChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Table Tab View -->
+                        <div class="tab-pane fade" id="tableView" role="tabpanel" aria-labelledby="table-tab">
+                            <div class="table-view-wrapper table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">Model Name</th>
+                                            <th scope="col">Score (0-100)</th>
+                                            <th scope="col">Grade</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="predictionsTableBody">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
                     </div>
 
                 </div>
             </div>
 
-        </div>
-
-        <!-- BELOW ROW: Live Prediction Chart -->
-        <div class="card p-4 mb-4">
-            <div class="d-flex align-items-center justify-content-between mb-3">
-                <h6 class="fw-bold mb-0 text-dark">📈 Vertical Score Benchmark Comparison</h6>
-                <span class="badge bg-light text-dark border" id="yAxisRangeBadge">Focused Y-Axis Range</span>
-            </div>
-            <div class="chart-wrapper">
-                <div style="height: 340px; position: relative;">
-                    <canvas id="predictionChart"></canvas>
-                </div>
-            </div>
         </div>
 
         <!-- EXPLORE MODELS SECTION (Collapsible) -->
@@ -416,14 +541,14 @@
         <div id="explorerSection" class="card p-4 mb-4" style="display: none;">
             <div class="d-flex align-items-center justify-content-between mb-3">
                 <div>
-                    <h5 class="fw-bold mb-1 text-dark">🔬 Offline Model Metrics Explorer</h5>
+                    <h5 class="fw-bold mb-1 text-body">🔬 Offline Model Metrics Explorer</h5>
                     <p class="text-muted small mb-0">Compare offline model evaluation metrics directly on the chart.</p>
                 </div>
                 <span class="badge bg-secondary">Static Metadata Analysis</span>
             </div>
 
             <!-- Metric Pickers: Primary Metric Defaults to Accuracy, Secondary Metric is Optional -->
-            <div class="row g-3 mb-4 p-3 rounded bg-light border">
+            <div class="row g-3 mb-4 p-3 rounded custom-tertiary border">
                 <div class="col-md-6">
                     <label for="metricSelect1" class="form-label fw-semibold small text-primary">Primary Category
                         Metric</label>
@@ -459,41 +584,44 @@
             </div>
 
             <!-- Explorer Bar Chart Container -->
-            <div class="chart-wrapper">
-                <div style="height: 380px; position: relative;">
+            <div class="chart-wrapper" style="height: 380px;">
+                <div style="height: 100%; position: relative;">
                     <canvas id="explorerChart"></canvas>
                 </div>
             </div>
         </div>
 
-
         <!-- DATASET & NOTEBOOK REFERENCE FOOTER NOTE -->
-        <div class="card p-4 mt-4 border-warning bg-light">
-          <div class="d-flex align-items-center mb-2">
-            <span class="fs-4 me-2">⚠️</span>
-            <h6 class="fw-bold text-dark mb-0">Important Dataset & Model Performance Notice</h6>
-          </div>
-          <p class="small text-secondary mb-3">
-            <strong>Please Note:</strong> This predictive model was trained on a specific dataset containing <strong>only 1,000 student entries</strong>. 
-            Consequently, all interactive feature controls, valid input ranges, and model prediction outputs are designed specifically with respect to this restricted distribution. 
-            Users should keep this limited dataset size in mind and treat the prediction performance and outputs accordingly rather than taking them for granted.
-          </p>
-          <div class="d-flex flex-wrap gap-2">
-            <a href="https://www.kaggle.com/code/utkarshsaxenadn/exam-score-prediction-most-robust-60-acc/notebook" 
-               target="_blank" 
-               class="btn btn-sm btn-outline-primary">
-              📓 View Kaggle Notebook
-            </a>
-            <a href="https://www.kaggle.com/datasets/harshadapatil31/student-performance-and-study-habits-dataset/data" 
-               target="_blank" 
-               class="btn btn-sm btn-outline-secondary">
-              📂 View Kaggle Dataset (1k Rows)
-            </a>
-          </div>
+        <div class="card p-4 mt-4 custom-notice-card">
+            <div class="d-flex align-items-center mb-2">
+                <span class="fs-4 me-2">⚠️</span>
+                <h6 class="fw-bold text-body mb-0">Important Dataset & Model Performance Notice</h6>
+            </div>
+            <p class="small text-muted mb-3">
+                <strong>Please Note:</strong> This predictive model was trained on a specific dataset containing
+                <strong>only 1,000 student entries</strong>.
+                Consequently, all interactive feature controls, valid input ranges, and model prediction outputs are
+                designed specifically with respect to this restricted distribution.
+                Users should keep this limited dataset size in mind and treat the prediction performance and outputs
+                accordingly rather than taking them for granted.
+            </p>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="https://www.kaggle.com/code/utkarshsaxenadn/exam-score-prediction-most-robust-60-acc/notebook"
+                    target="_blank" class="btn btn-sm btn-outline-primary">
+                    📓 View Kaggle Notebook
+                </a>
+                <a href="https://www.kaggle.com/datasets/harshadapatil31/student-performance-and-study-habits-dataset/data"
+                    target="_blank" class="btn btn-sm btn-outline-secondary">
+                    📂 View Kaggle Dataset (1k Rows)
+                </a>
+            </div>
         </div>
 
     </div>
 
+
+    <!-- Bootstrap 5 JS Script for Tabs -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         Chart.register(ChartDataLabels);
 
@@ -511,6 +639,24 @@
         let predictionChart = null;
         let explorerChart = null;
         let cachedMetadata = null;
+        let currentPredictions = [];
+
+        // Theme Toggle Handler
+        function toggleTheme() {
+            const htmlTag = document.documentElement;
+            const currentTheme = htmlTag.getAttribute('data-bs-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+            htmlTag.setAttribute('data-bs-theme', newTheme);
+            document.getElementById('themeToggleBtn').innerText = newTheme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
+
+            if (currentPredictions.length) {
+                renderChart(currentPredictions);
+            }
+            if (cachedMetadata) {
+                updateExplorerChart();
+            }
+        }
 
         // Distinct color palette mapping for each unique model
         const MODEL_PALETTE = {
@@ -582,59 +728,90 @@
             runPrediction();
         }
 
-        /* Live Prediction Chart with Individual Model Colors */
-        function renderChart(predictions, highestScoreModelName) {
+        /* Live Prediction Radar/Spider Chart */
+        function renderChart(predictions) {
+            currentPredictions = predictions;
             const canvas = document.getElementById('predictionChart');
             const ctx = canvas.getContext('2d');
 
+            const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+            const tickColor = isDark ? '#94a3b8' : '#6c757d';
+            const gridColor = isDark ? '#334155' : '#e9ecef';
+            const labelColor = isDark ? '#f8fafc' : '#212529';
+
             const labels = predictions.map(p => p.model);
             const scores = predictions.map(p => typeof p.score === 'number' ? p.score : 0);
+            const grades = predictions.map(p => p.grade || 'N/A');
 
             const minVal = Math.min(...scores);
             const maxVal = Math.max(...scores);
 
-            const yMin = Math.max(0, Math.floor(minVal - 6));
-            const yMax = Math.min(105, Math.ceil(maxVal + 6));
+            const rMin = Math.max(0, Math.floor(minVal - 6));
+            const rMax = Math.min(105, Math.ceil(maxVal + 6));
 
-            document.getElementById('yAxisRangeBadge').innerText = `Y-Axis Range: ${yMin} - ${Math.min(100, yMax)}`;
-
-            const backgroundColors = labels.map((name, idx) => getModelColors(name, idx).bg);
-            const borderColors = labels.map((name, idx) => getModelColors(name, idx).border);
+            const pointBackgroundColors = labels.map((name, idx) => getModelColors(name, idx).bg);
+            const pointBorderColors = labels.map((name, idx) => getModelColors(name, idx).border);
 
             if (predictionChart) predictionChart.destroy();
 
             predictionChart = new Chart(ctx, {
-                type: 'bar',
+                type: 'radar',
                 data: {
                     labels: labels,
                     datasets: [{
                         label: 'Predicted Score',
                         data: scores,
-                        backgroundColor: backgroundColors,
-                        borderColor: borderColors,
-                        borderWidth: 1.5,
-                        borderRadius: 8,
-                        borderSkipped: false,
-                        maxBarThickness: 45
+                        backgroundColor: isDark ? 'rgba(13, 110, 253, 0.35)' : 'rgba(13, 110, 253, 0.2)',
+                        borderColor: '#0d6efd',
+                        borderWidth: 2,
+                        pointBackgroundColor: pointBackgroundColors,
+                        pointBorderColor: pointBorderColors,
+                        pointHoverBackgroundColor: '#ffffff',
+                        pointHoverBorderColor: '#0d6efd',
+                        pointRadius: 6,
+                        pointHoverRadius: 8
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     animation: { duration: 500 },
-                    layout: { padding: { top: 25 } },
                     scales: {
-                        x: { grid: { display: false }, ticks: { font: { size: 12, weight: '600' }, color: '#212529' } },
-                        y: { min: yMin, max: yMax, grid: { color: '#e9ecef', strokeDash: [4, 4] }, ticks: { font: { size: 12 }, color: '#6c757d' } }
+                        r: {
+                            min: rMin,
+                            max: rMax,
+                            ticks: {
+                                stepSize: Math.ceil((rMax - rMin) / 4) || 5,
+                                font: { size: 11 },
+                                color: tickColor,
+                                backdropColor: 'transparent'
+                            },
+                            grid: { color: gridColor },
+                            angleLines: { color: gridColor },
+                            pointLabels: {
+                                font: { size: 12, weight: '600' },
+                                color: labelColor
+                            }
+                        }
                     },
                     plugins: {
                         legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const index = context.dataIndex;
+                                    const score = context.raw;
+                                    const grade = grades[index];
+                                    return ` Score: ${score.toFixed(1)} | Grade: ${grade}`;
+                                }
+                            }
+                        },
                         datalabels: {
                             anchor: 'end',
                             align: 'top',
                             offset: 2,
-                            font: { weight: 'bold', size: 12 },
-                            color: '#212529',
+                            font: { weight: 'bold', size: 13 },
+                            color: isDark ? '#FFFFFF' : '#0d6efd',
                             formatter: function (value) {
                                 return value.toFixed(1);
                             }
@@ -708,7 +885,7 @@
                         tableBody.appendChild(row);
                     });
 
-                    renderChart(result.predictions, highestScoreModelData.model);
+                    renderChart(result.predictions);
                 } else {
                     errorAlert.innerText = result.error || 'Failed to generate predictions.';
                     errorAlert.style.display = 'block';
@@ -757,9 +934,14 @@
             }
         }
 
-        /* Updated Explorer Chart: Every model uses its dedicated distinct color */
+        /* Updated Explorer Chart */
         function updateExplorerChart() {
             if (!cachedMetadata || cachedMetadata.length === 0) return;
+
+            const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+            const tickColor = isDark ? '#94a3b8' : '#6c757d';
+            const gridColor = isDark ? '#334155' : '#e9ecef';
+            const labelColor = isDark ? '#f8fafc' : '#212529';
 
             const metric1Key = document.getElementById('metricSelect1').value;
             const metric2Key = document.getElementById('metricSelect2').value;
@@ -822,26 +1004,26 @@
                     scales: {
                         x: {
                             grid: { display: false },
-                            ticks: { font: { size: 12, weight: '600' }, color: '#212529' }
+                            ticks: { font: { size: 12, weight: '600' }, color: labelColor }
                         },
                         y: {
                             suggestedMax: maxVal > 0 ? maxVal * 1.15 : 1,
-                            grid: { color: '#e9ecef', strokeDash: [4, 4] },
-                            ticks: { font: { size: 11 }, color: '#6c757d' }
+                            grid: { color: gridColor, strokeDash: [4, 4] },
+                            ticks: { font: { size: 11 }, color: tickColor }
                         }
                     },
                     plugins: {
                         legend: {
                             display: true,
                             position: 'top',
-                            labels: { font: { size: 12, weight: '600' } }
+                            labels: { font: { size: 12, weight: '600' }, color: labelColor }
                         },
                         datalabels: {
                             anchor: 'end',
                             align: 'top',
                             offset: 2,
                             font: { weight: 'bold', size: 11 },
-                            color: '#333333',
+                            color: labelColor,
                             formatter: function (value) {
                                 if (typeof value !== 'number') return 'N/A';
                                 return value < 1 ? value.toFixed(4) : value.toFixed(2);
@@ -854,13 +1036,28 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             const inputs = document.querySelectorAll('.live-input');
+
             inputs.forEach(input => {
-                input.addEventListener('input', () => {
-                    clearTimeout(debounceTimer);
-                    debounceTimer = setTimeout(runPrediction, 150);
-                });
-                input.addEventListener('change', runPrediction);
+                if (input.type === 'range') {
+                    input.addEventListener('input', (e) => {
+                        const id = e.target.id;
+                        const val = e.target.value;
+                        const suffix = (id === 'study_time_hours' || id === 'sleep_hours') ? ' hrs' : '';
+                        updateLabel(id, val + suffix);
+                    });
+
+                    input.addEventListener('change', runPrediction);
+                } else {
+                    input.addEventListener('change', runPrediction);
+                }
             });
+
+            const radarTabBtn = document.getElementById('radar-tab');
+            if (radarTabBtn) {
+                radarTabBtn.addEventListener('shown.bs.tab', () => {
+                    if (predictionChart) predictionChart.resize();
+                });
+            }
 
             runPrediction();
         });
