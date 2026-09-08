@@ -5,6 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Performance Predictor</title>
+
+    <!-- Link to site.webmanifest -->
+    <link rel="manifest" href="{{ url_for('static', filename='favicon_io/site.webmanifest') }}">
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Chart.js and Data Labels Plugin -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -74,6 +78,7 @@
             --badge-err-bg: #41464b;
             --badge-err-text: #e2e3e5;
         }
+
 
         body {
             background-color: var(--bg-body);
@@ -791,16 +796,19 @@
             const firstSample = data.sample_row_predictions[0];
             const modelNames = Object.keys(firstSample.predictions);
 
-            // Construct Dynamic Table Headers
+            // Construct Dynamic Table Headers (Schema Order)
             headerRow.innerHTML = `
-                <th scope="col" class="text-nowrap">#</th>
-                <th scope="col" class="text-nowrap">Gender</th>
-                <th scope="col" class="text-nowrap">Parental Edu.</th>
-                <th scope="col" class="text-nowrap">Study Hrs</th>
-                <th scope="col" class="text-nowrap">Attendance</th>
-                <th scope="col" class="text-nowrap">Sleep Hrs</th>
-                <th scope="col" class="text-nowrap">Prev Score</th>
-            `;
+        <th scope="col" class="text-nowrap">#</th>
+        <th scope="col" class="text-nowrap">Gender</th>
+        <th scope="col" class="text-nowrap">Study Hrs</th>
+        <th scope="col" class="text-nowrap">Attendance (%)</th>
+        <th scope="col" class="text-nowrap">Sleep Hrs</th>
+        <th scope="col" class="text-nowrap">Parental Edu.</th>
+        <th scope="col" class="text-nowrap">Internet Access</th>
+        <th scope="col" class="text-nowrap">Extracurriculars</th>
+        <th scope="col" class="text-nowrap">Part-Time Job</th>
+        <th scope="col" class="text-nowrap">Prev Grade</th>
+    `;
 
             // Append separate Score and Grade headers for each model
             modelNames.forEach(model => {
@@ -827,10 +835,13 @@
                 let rowHtml = `
             <td class="fw-bold">${item.row_index}</td>
             <td>${inp.gender || '-'}</td>
-            <td>${inp.parental_education || '-'}</td>
             <td>${inp.study_time_hours !== undefined ? inp.study_time_hours : '-'}</td>
             <td>${inp.attendance_percent !== undefined ? inp.attendance_percent : '-'}</td>
             <td>${inp.sleep_hours !== undefined ? inp.sleep_hours : '-'}</td>
+            <td>${inp.parental_education || '-'}</td>
+            <td>${inp.internet_access || '-'}</td>
+            <td>${inp.extracurricular_activities || '-'}</td>
+            <td>${inp.part_time_job || '-'}</td>
             <td>${inp.previous_grade !== undefined ? inp.previous_grade : '-'}</td>
         `;
 
