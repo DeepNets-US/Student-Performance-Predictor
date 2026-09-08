@@ -1,0 +1,16 @@
+{
+    "model_name": "Bayesian Ridge",
+    "model_type": "Traditional ML",
+    "metrics": {
+        "Model": "Bayesian Ridge",
+        "Train RMSE": 5.974449276833224,
+        "Test RMSE (OOF)": 6.052756801252507,
+        "RMSE Gap (Test - Train)": 0.07830752441928279,
+        "Test MAE (OOF)": 4.801785424287354,
+        "Test R\u00b2 (OOF)": 0.6525938106752167,
+        "Grade Accuracy (OOF)": 0.5880000000000001,
+        "Grade Precision (OOF)": 0.6053510366267412,
+        "Grade Recall (OOF)": 0.5880000000000001,
+        "Grade F1-Score (OOF)": 0.5809835988403674
+    }
+}

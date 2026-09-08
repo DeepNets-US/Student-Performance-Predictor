@@ -1,0 +1,16 @@
+{
+    "model_name": "CatBoost (Regularized)",
+    "model_type": "Gradient Boosting",
+    "metrics": {
+        "Model": "CatBoost (Regularized)",
+        "Train RMSE": 5.810662781158415,
+        "Test RMSE (OOF)": 6.469915383819182,
+        "RMSE Gap (Test - Train)": 0.659252602660767,
+        "Test MAE (OOF)": 5.148741568938574,
+        "Test R\u00b2 (OOF)": 0.6034874830965486,
+        "Grade Accuracy (OOF)": 0.5609999999999999,
+        "Grade Precision (OOF)": 0.5755201829345445,
+        "Grade Recall (OOF)": 0.5609999999999999,
+        "Grade F1-Score (OOF)": 0.5449879355404267
+    }
+}

@@ -1,0 +1,16 @@
+{
+    "model_name": "Voting Regressor",
+    "model_type": "Ensemble (Voting Regressor)",
+    "metrics": {
+        "Model": "Voting Regressor (Ensemble)",
+        "Train RMSE": 5.8715448888773265,
+        "Test RMSE (OOF)": 6.136817670076042,
+        "RMSE Gap (Test - Train)": 0.2652727811987159,
+        "Test MAE (OOF)": 4.864918936150998,
+        "Test R\u00b2 (OOF)": 0.6429698034403024,
+        "Grade Accuracy (OOF)": 0.588,
+        "Grade Precision (OOF)": 0.6079109718438526,
+        "Grade Recall (OOF)": 0.588,
+        "Grade F1-Score (OOF)": 0.5753708284277375
+    }
+}

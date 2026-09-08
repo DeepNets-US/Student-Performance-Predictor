@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Performance Predictor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Chart.js and Data Labels Plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .preset-btn {
+            transition: all 0.2s ease-in-out;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        .preset-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .grade-badge {
+            font-size: 1rem;
+            font-weight: 700;
+            padding: 5px 10px;
+            border-radius: 8px;
+        }
+
+        .grade-A {
+            background-color: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .grade-B {
+            background-color: #cff4fc;
+            color: #055160;
+        }
+
+        .grade-C {
+            background-color: #fff3cd;
+            color: #664d03;
+        }
+
+        .grade-D {
+            background-color: #ffe69c;
+            color: #856404;
+        }
+
+        .grade-F {
+            background-color: #f8d7da;
+            color: #842029;
+        }
+
+        .grade-Error {
+            background-color: #e2e3e5;
+            color: #41464b;
+        }
+
+        .btn-group-toggle .btn {
+            border-radius: 20px !important;
+            margin-right: 4px;
+            margin-bottom: 4px;
+            font-weight: 500;
+            border: 1.5px solid #dee2e6;
+            background-color: #ffffff;
+            color: #495057;
+            transition: all 0.2s;
+        }
+
+        .btn-check:checked+.btn {
+            background-color: #0d6efd;
+            color: #ffffff;
+            border-color: #0d6efd;
+            box-shadow: 0 2px 6px rgba(13, 110, 253, 0.3);
+        }
+
+        .btn-group-toggle .btn:hover {
+            border-color: #0d6efd;
+        }
+
+        .form-range {
+            cursor: pointer;
+        }
+
+        .val-badge {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .range-bounds {
+            font-size: 0.72rem;
+            color: #6c757d;
+        }
+
+        .best-model-card {
+            border: 2px solid #0d6efd;
+            background: linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%);
+            border-radius: 12px;
+        }
+
+        .highest-score-card {
+            border: 2px solid #198754;
+            background: linear-gradient(135deg, #f0fff4 0%, #ffffff 100%);
+            border-radius: 12px;
+        }
+
+        .chart-wrapper {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid #e9ecef;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+        }
+
+        .toggle-explorer-btn {
+            border-radius: 30px;
+            padding: 10px 24px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container-fluid px-4 py-4">
+
+        <!-- Header -->
+        <div class="text-center mb-4">
+            <h1 class="fw-bold text-primary">Student Academic Performance Predictor</h1>
+            <p class="text-muted">Adjust feature controls or click a preset to see real-time performance predictions
+                across models.</p>
+        </div>
+
+        <!-- Quick Archetype Presets -->
+        <div class="card p-3 mb-4">
+            <h6 class="fw-bold mb-2">⚡ Quick Archetype Presets</h6>
+            <div class="d-flex flex-wrap gap-2">
+                <button type="button" class="btn btn-sm btn-outline-primary preset-btn"
+                    onclick="applyPreset('scholar')">🌟 Model Scholar</button>
+                <button type="button" class="btn btn-sm btn-outline-success preset-btn"
+                    onclick="applyPreset('turnaround')">🚀 Turnaround Kid</button>
+                <button type="button" class="btn btn-sm btn-outline-danger preset-btn"
+                    onclick="applyPreset('at_risk')">⚠️ At-Risk Student</button>
+                <button type="button" class="btn btn-sm btn-outline-warning preset-btn"
+                    onclick="applyPreset('multitasker')">💼 Busy Multitasker</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary preset-btn"
+                    onclick="applyPreset('passive')">🎧 Passive Attendee</button>
+                <button type="button" class="btn btn-sm btn-outline-info preset-btn"
+                    onclick="applyPreset('baseline')">📊 Average Baseline</button>
+            </div>
+        </div>
+
+        <!-- MAIN ROW: Inputs (Left Column) + Model Outputs (Right Column) -->
+        <div class="row g-4 mb-4">
+
+            <!-- LEFT COLUMN: Interactive Input Controls -->
+            <div class="col-lg-6">
+                <div class="card p-4 h-100">
+                    <h5 class="fw-bold mb-3 text-primary">🎛️ Student Feature Controls</h5>
+                    <form id="predictionForm" onsubmit="event.preventDefault(); runPrediction();">
+                        <div class="row g-3">
+
+                            <!-- Categorical Field: Gender -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold d-block fs-7">Gender</label>
+                                <div class="btn-group-toggle" role="group">
+                                    <input type="radio" class="btn-check live-input" name="gender" id="gender_male"
+                                        value="Male" checked>
+                                    <label class="btn btn-sm" for="gender_male">Male</label>
+
+                                    <input type="radio" class="btn-check live-input" name="gender" id="gender_female"
+                                        value="Female">
+                                    <label class="btn btn-sm" for="gender_female">Female</label>
+                                </div>
+                            </div>
+
+                            <!-- Categorical Field: Internet Access -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold d-block fs-7">Internet Access</label>
+                                <div class="btn-group-toggle" role="group">
+                                    <input type="radio" class="btn-check live-input" name="internet_access" id="net_yes"
+                                        value="Yes" checked>
+                                    <label class="btn btn-sm" for="net_yes">Yes</label>
+
+                                    <input type="radio" class="btn-check live-input" name="internet_access" id="net_no"
+                                        value="No">
+                                    <label class="btn btn-sm" for="net_no">No</label>
+                                </div>
+                            </div>
+
+                            <!-- Categorical Field: Parental Education Level -->
+                            <div class="col-12">
+                                <label class="form-label fw-semibold d-block fs-7">Parental Education Level</label>
+                                <div class="btn-group-toggle" role="group">
+                                    <input type="radio" class="btn-check live-input" name="parental_education"
+                                        id="edu_hs" value="High School" checked>
+                                    <label class="btn btn-sm" for="edu_hs">High School</label>
+
+                                    <input type="radio" class="btn-check live-input" name="parental_education"
+                                        id="edu_bach" value="Bachelors">
+                                    <label class="btn btn-sm" for="edu_bach">Bachelors</label>
+
+                                    <input type="radio" class="btn-check live-input" name="parental_education"
+                                        id="edu_mast" value="Masters">
+                                    <label class="btn btn-sm" for="edu_mast">Masters</label>
+
+                                    <input type="radio" class="btn-check live-input" name="parental_education"
+                                        id="edu_phd" value="PhD">
+                                    <label class="btn btn-sm" for="edu_phd">PhD</label>
+
+                                    <input type="radio" class="btn-check live-input" name="parental_education"
+                                        id="edu_nd" value="Not Disclosed">
+                                    <label class="btn btn-sm" for="edu_nd">Not Disclosed</label>
+                                </div>
+                            </div>
+
+                            <!-- Categorical Field: Extracurricular Activities -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold d-block fs-7">Extracurriculars</label>
+                                <div class="btn-group-toggle" role="group">
+                                    <input type="radio" class="btn-check live-input" name="extracurricular_activities"
+                                        id="extra_yes" value="Yes">
+                                    <label class="btn btn-sm" for="extra_yes">Yes</label>
+
+                                    <input type="radio" class="btn-check live-input" name="extracurricular_activities"
+                                        id="extra_no" value="No" checked>
+                                    <label class="btn btn-sm" for="extra_no">No</label>
+                                </div>
+                            </div>
+
+                            <!-- Categorical Field: Part-Time Job -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold d-block fs-7">Part-Time Job</label>
+                                <div class="btn-group-toggle" role="group">
+                                    <input type="radio" class="btn-check live-input" name="part_time_job" id="job_yes"
+                                        value="Yes">
+                                    <label class="btn btn-sm" for="job_yes">Yes</label>
+
+                                    <input type="radio" class="btn-check live-input" name="part_time_job" id="job_no"
+                                        value="No" checked>
+                                    <label class="btn btn-sm" for="job_no">No</label>
+                                </div>
+                            </div>
+
+                            <hr class="my-2 text-muted">
+
+                            <!-- Continuous Slider: Study Time -->
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="study_time_hours" class="form-label fw-semibold mb-0 small">Study Time
+                                        (Hours/Day)</label>
+                                    <span class="badge bg-primary val-badge" id="study_time_hours_val">3.6 hrs</span>
+                                </div>
+                                <input type="range" min="0.5" max="8.1" step="0.1" class="form-range live-input"
+                                    id="study_time_hours" value="3.6"
+                                    oninput="updateLabel('study_time_hours', this.value + ' hrs')">
+                                <div class="d-flex justify-content-between range-bounds">
+                                    <span>Min: 0.5 hrs</span>
+                                    <span>Max: 8.1 hrs</span>
+                                </div>
+                            </div>
+
+                            <!-- Continuous Slider: Attendance Percent -->
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="attendance_percent" class="form-label fw-semibold mb-0 small">Attendance
+                                        Rate</label>
+                                    <span class="badge bg-primary val-badge" id="attendance_percent_val">85.0</span>
+                                </div>
+                                <input type="range" min="54.8" max="100.0" step="0.1" class="form-range live-input"
+                                    id="attendance_percent" value="85.0"
+                                    oninput="updateLabel('attendance_percent', this.value)">
+                                <div class="d-flex justify-content-between range-bounds">
+                                    <span>Min: 54.8</span>
+                                    <span>Max: 100.0</span>
+                                </div>
+                            </div>
+
+                            <!-- Continuous Slider: Sleep Hours -->
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="sleep_hours" class="form-label fw-semibold mb-0 small">Sleep Duration
+                                        (Hours/Night)</label>
+                                    <span class="badge bg-primary val-badge" id="sleep_hours_val">6.8 hrs</span>
+                                </div>
+                                <input type="range" min="3.2" max="10.0" step="0.1" class="form-range live-input"
+                                    id="sleep_hours" value="6.8"
+                                    oninput="updateLabel('sleep_hours', this.value + ' hrs')">
+                                <div class="d-flex justify-content-between range-bounds">
+                                    <span>Min: 3.2 hrs</span>
+                                    <span>Max: 10.0 hrs</span>
+                                </div>
+                            </div>
+
+                            <!-- Continuous Slider: Previous Grade -->
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="previous_grade" class="form-label fw-semibold mb-0 small">Previous
+                                        Score</label>
+                                    <span class="badge bg-primary val-badge" id="previous_grade_val">69.7</span>
+                                </div>
+                                <input type="range" min="31.3" max="100.0" step="0.1" class="form-range live-input"
+                                    id="previous_grade" value="69.7"
+                                    oninput="updateLabel('previous_grade', this.value)">
+                                <div class="d-flex justify-content-between range-bounds">
+                                    <span>Min: 31.3</span>
+                                    <span>Max: 100.0</span>
+                                </div>
+                            </div>
+
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: Model Predictions Output -->
+            <div class="col-lg-6">
+                <div class="card p-4 h-100" id="resultsCard">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold mb-0 text-primary">🤖 Model Predictions Output</h5>
+                        <span id="loadingIndicator" class="badge bg-secondary" style="display: none;">Updating...</span>
+                    </div>
+
+                    <div id="errorAlert" class="alert alert-danger" style="display: none;"></div>
+
+                    <!-- Highlight Cards Row -->
+                    <div class="row g-2 mb-3">
+
+                        <div class="col-md-6">
+                            <div class="best-model-card p-3 h-100">
+                                <div class="d-flex align-items-center justify-content-between mb-1">
+                                    <span class="badge bg-primary">🏆 Best Model</span>
+                                    <small class="text-primary fw-bold">Highest Accuracy</small>
+                                </div>
+                                <h6 class="fw-bold mb-1" id="bestModelName">Bayesian Ridge</h6>
+                                <p class="text-muted mb-2 extra-small" style="font-size: 0.75rem;">Top benchmark model.
+                                </p>
+                                <div class="d-flex align-items-center justify-content-between mt-auto">
+                                    <span class="fs-5 fw-bold text-primary" id="bestModelScore">--</span>
+                                    <span class="grade-badge grade-Error" id="bestModelGrade">--</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="highest-score-card p-3 h-100">
+                                <div class="d-flex align-items-center justify-content-between mb-1">
+                                    <span class="badge bg-success">🚀 Highest Prediction</span>
+                                    <small class="text-success fw-bold">Max Score</small>
+                                </div>
+                                <h6 class="fw-bold mb-1" id="highestScoreModelName">--</h6>
+                                <p class="text-muted mb-2 extra-small" style="font-size: 0.75rem;">Highest score
+                                    predicted.</p>
+                                <div class="d-flex align-items-center justify-content-between mt-auto">
+                                    <span class="fs-5 fw-bold text-success" id="highestScoreVal">--</span>
+                                    <span class="grade-badge grade-Error" id="highestScoreGrade">--</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- All Benchmark Models Table -->
+                    <h6 class="fw-bold mb-2 text-secondary">📊 Benchmark Models</h6>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col">Model Name</th>
+                                    <th scope="col">Score (0-100)</th>
+                                    <th scope="col">Grade</th>
+                                </tr>
+                            </thead>
+                            <tbody id="predictionsTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+        <!-- BELOW ROW: Live Prediction Chart -->
+        <div class="card p-4 mb-4">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h6 class="fw-bold mb-0 text-dark">📈 Vertical Score Benchmark Comparison</h6>
+                <span class="badge bg-light text-dark border" id="yAxisRangeBadge">Focused Y-Axis Range</span>
+            </div>
+            <div class="chart-wrapper">
+                <div style="height: 340px; position: relative;">
+                    <canvas id="predictionChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- EXPLORE MODELS SECTION (Collapsible) -->
+        <div class="text-center my-4">
+            <button class="btn btn-outline-primary toggle-explorer-btn" type="button" onclick="toggleExplorerSection()">
+                <span id="explorerBtnIcon">🔍</span> <span id="explorerBtnText">Explore Model Evaluation Metrics</span>
+            </button>
+        </div>
+
+        <div id="explorerSection" class="card p-4 mb-4" style="display: none;">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <div>
+                    <h5 class="fw-bold mb-1 text-dark">🔬 Offline Model Metrics Explorer</h5>
+                    <p class="text-muted small mb-0">Compare offline model evaluation metrics directly on the chart.</p>
+                </div>
+                <span class="badge bg-secondary">Static Metadata Analysis</span>
+            </div>
+
+            <!-- Metric Pickers: Primary Metric Defaults to Accuracy, Secondary Metric is Optional -->
+            <div class="row g-3 mb-4 p-3 rounded bg-light border">
+                <div class="col-md-6">
+                    <label for="metricSelect1" class="form-label fw-semibold small text-primary">Primary Category
+                        Metric</label>
+                    <select id="metricSelect1" class="form-select form-select-sm" onchange="updateExplorerChart()">
+                        <option value="Grade Accuracy (OOF)" selected>Grade Accuracy (OOF)</option>
+                        <option value="Grade Precision (OOF)">Grade Precision (OOF)</option>
+                        <option value="Grade Recall (OOF)">Grade Recall (OOF)</option>
+                        <option value="Grade F1-Score (OOF)">Grade F1-Score (OOF)</option>
+                        <option value="Test R² (OOF)">Test R² (OOF)</option>
+                        <option value="Test RMSE (OOF)">Test RMSE (OOF)</option>
+                        <option value="Train RMSE">Train RMSE</option>
+                        <option value="RMSE Gap (Test - Train)">RMSE Gap (Test - Train)</option>
+                        <option value="Test MAE (OOF)">Test MAE (OOF)</option>
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label for="metricSelect2" class="form-label fw-semibold small text-success">Secondary Category
+                        Metric (Optional)</label>
+                    <select id="metricSelect2" class="form-select form-select-sm" onchange="updateExplorerChart()">
+                        <option value="none" selected>-- None (Single Category View) --</option>
+                        <option value="Grade Accuracy (OOF)">Grade Accuracy (OOF)</option>
+                        <option value="Grade Precision (OOF)">Grade Precision (OOF)</option>
+                        <option value="Grade Recall (OOF)">Grade Recall (OOF)</option>
+                        <option value="Grade F1-Score (OOF)">Grade F1-Score (OOF)</option>
+                        <option value="Test R² (OOF)">Test R² (OOF)</option>
+                        <option value="Test RMSE (OOF)">Test RMSE (OOF)</option>
+                        <option value="Train RMSE">Train RMSE</option>
+                        <option value="RMSE Gap (Test - Train)">RMSE Gap (Test - Train)</option>
+                        <option value="Test MAE (OOF)">Test MAE (OOF)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Explorer Bar Chart Container -->
+            <div class="chart-wrapper">
+                <div style="height: 380px; position: relative;">
+                    <canvas id="explorerChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        Chart.register(ChartDataLabels);
+
+        const PRESETS = {
+            scholar: { gender: 'Male', study_time_hours: 5.9, attendance_percent: 100.0, sleep_hours: 7.3, parental_education: 'Bachelors', internet_access: 'Yes', extracurricular_activities: 'Yes', part_time_job: 'No', previous_grade: 89.8 },
+            turnaround: { gender: 'Male', study_time_hours: 4.6, attendance_percent: 100.0, sleep_hours: 5.8, parental_education: 'Masters', internet_access: 'Yes', extracurricular_activities: 'Yes', part_time_job: 'No', previous_grade: 37.5 },
+            at_risk: { gender: 'Female', study_time_hours: 1.9, attendance_percent: 69.0, sleep_hours: 6.0, parental_education: 'High School', internet_access: 'Yes', extracurricular_activities: 'No', part_time_job: 'Yes', previous_grade: 34.5 },
+            multitasker: { gender: 'Female', study_time_hours: 6.3, attendance_percent: 100.0, sleep_hours: 5.7, parental_education: 'High School', internet_access: 'Yes', extracurricular_activities: 'Yes', part_time_job: 'Yes', previous_grade: 75.5 },
+            passive: { gender: 'Male', study_time_hours: 1.5, attendance_percent: 100.0, sleep_hours: 5.0, parental_education: 'High School', internet_access: 'Yes', extracurricular_activities: 'Yes', part_time_job: 'Yes', previous_grade: 58.6 },
+            baseline: { gender: 'Male', study_time_hours: 3.6, attendance_percent: 85.0, sleep_hours: 6.8, parental_education: 'High School', internet_access: 'Yes', extracurricular_activities: 'No', part_time_job: 'No', previous_grade: 69.7 }
+        };
+
+        const BEST_MODEL_NAME = 'Bayesian Ridge';
+        let debounceTimer = null;
+        let predictionChart = null;
+        let explorerChart = null;
+        let cachedMetadata = null;
+
+        // Distinct color palette mapping for each unique model
+        const MODEL_PALETTE = {
+            'Bayesian Ridge': { bg: '#0d6efd', border: '#0a58ca', secondaryBg: '#6ea8fe' },
+            'CatBoost': { bg: '#fd7e14', border: '#ca6510', secondaryBg: '#fecba1' },
+            'LightGBM': { bg: '#198754', border: '#146c43', secondaryBg: '#75b798' },
+            'XGBoost': { bg: '#d63384', border: '#ab296a', secondaryBg: '#e685b5' },
+            'Voting Regressor': { bg: '#6f42c1', border: '#59359a', secondaryBg: '#a98eda' },
+            'Random Forest': { bg: '#20c997', border: '#1aa179', secondaryBg: '#7ee2c4' },
+            'Linear Regression': { bg: '#0dcaf0', border: '#0aa2c0', secondaryBg: '#6edff6' }
+        };
+
+        // Fallback dynamic color generator for unknown model names
+        const FALLBACK_COLORS = [
+            { bg: '#0d6efd', border: '#0a58ca', secondaryBg: '#6ea8fe' },
+            { bg: '#fd7e14', border: '#ca6510', secondaryBg: '#fecba1' },
+            { bg: '#198754', border: '#146c43', secondaryBg: '#75b798' },
+            { bg: '#d63384', border: '#ab296a', secondaryBg: '#e685b5' },
+            { bg: '#6f42c1', border: '#59359a', secondaryBg: '#a98eda' },
+            { bg: '#20c997', border: '#1aa179', secondaryBg: '#7ee2c4' },
+            { bg: '#ffc107', border: '#cc9a06', secondaryBg: '#ffe08a' }
+        ];
+
+        function getModelColors(modelName, index = 0) {
+            if (MODEL_PALETTE[modelName]) return MODEL_PALETTE[modelName];
+            for (const key in MODEL_PALETTE) {
+                if (modelName.toLowerCase().includes(key.toLowerCase())) {
+                    return MODEL_PALETTE[key];
+                }
+            }
+            return FALLBACK_COLORS[index % FALLBACK_COLORS.length];
+        }
+
+        function updateLabel(id, text) {
+            const badge = document.getElementById(id + '_val');
+            if (badge) badge.innerText = text;
+        }
+
+        function getRadioValue(name) {
+            const checked = document.querySelector(`input[name="${name}"]:checked`);
+            return checked ? checked.value : '';
+        }
+
+        function setRadioValue(name, value) {
+            const target = document.querySelector(`input[name="${name}"][value="${value}"]`);
+            if (target) target.checked = true;
+        }
+
+        function applyPreset(presetKey) {
+            const preset = PRESETS[presetKey];
+            if (!preset) return;
+
+            setRadioValue('gender', preset.gender);
+            setRadioValue('parental_education', preset.parental_education);
+            setRadioValue('internet_access', preset.internet_access);
+            setRadioValue('extracurricular_activities', preset.extracurricular_activities);
+            setRadioValue('part_time_job', preset.part_time_job);
+
+            document.getElementById('study_time_hours').value = preset.study_time_hours;
+            document.getElementById('attendance_percent').value = preset.attendance_percent;
+            document.getElementById('sleep_hours').value = preset.sleep_hours;
+            document.getElementById('previous_grade').value = preset.previous_grade;
+
+            updateLabel('study_time_hours', preset.study_time_hours + ' hrs');
+            updateLabel('attendance_percent', preset.attendance_percent);
+            updateLabel('sleep_hours', preset.sleep_hours + ' hrs');
+            updateLabel('previous_grade', preset.previous_grade);
+
+            runPrediction();
+        }
+
+        /* Live Prediction Chart with Individual Model Colors */
+        function renderChart(predictions, highestScoreModelName) {
+            const canvas = document.getElementById('predictionChart');
+            const ctx = canvas.getContext('2d');
+
+            const labels = predictions.map(p => p.model);
+            const scores = predictions.map(p => typeof p.score === 'number' ? p.score : 0);
+
+            const minVal = Math.min(...scores);
+            const maxVal = Math.max(...scores);
+
+            const yMin = Math.max(0, Math.floor(minVal - 6));
+            const yMax = Math.min(105, Math.ceil(maxVal + 6));
+
+            document.getElementById('yAxisRangeBadge').innerText = `Y-Axis Range: ${yMin} - ${Math.min(100, yMax)}`;
+
+            const backgroundColors = labels.map((name, idx) => getModelColors(name, idx).bg);
+            const borderColors = labels.map((name, idx) => getModelColors(name, idx).border);
+
+            if (predictionChart) predictionChart.destroy();
+
+            predictionChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Predicted Score',
+                        data: scores,
+                        backgroundColor: backgroundColors,
+                        borderColor: borderColors,
+                        borderWidth: 1.5,
+                        borderRadius: 8,
+                        borderSkipped: false,
+                        maxBarThickness: 45
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 500 },
+                    layout: { padding: { top: 25 } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { font: { size: 12, weight: '600' }, color: '#212529' } },
+                        y: { min: yMin, max: yMax, grid: { color: '#e9ecef', strokeDash: [4, 4] }, ticks: { font: { size: 12 }, color: '#6c757d' } }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            offset: 2,
+                            font: { weight: 'bold', size: 12 },
+                            color: '#212529',
+                            formatter: function (value) {
+                                return value.toFixed(1);
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        async function runPrediction() {
+            const tableBody = document.getElementById('predictionsTableBody');
+            const errorAlert = document.getElementById('errorAlert');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+
+            loadingIndicator.style.display = 'inline-block';
+            errorAlert.style.display = 'none';
+
+            const payload = {
+                gender: getRadioValue('gender'),
+                study_time_hours: parseFloat(document.getElementById('study_time_hours').value) || 0.5,
+                attendance_percent: parseFloat(document.getElementById('attendance_percent').value) || 54.8,
+                sleep_hours: parseFloat(document.getElementById('sleep_hours').value) || 3.2,
+                parental_education: getRadioValue('parental_education'),
+                internet_access: getRadioValue('internet_access'),
+                extracurricular_activities: getRadioValue('extracurricular_activities'),
+                part_time_job: getRadioValue('part_time_job'),
+                previous_grade: parseFloat(document.getElementById('previous_grade').value) || 31.3
+            };
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (result.success && result.predictions) {
+                    tableBody.innerHTML = '';
+
+                    const bestModelData = result.predictions.find(p => p.model === BEST_MODEL_NAME) || result.predictions[0];
+                    const highestScoreModelData = result.predictions.reduce((prev, current) => {
+                        const prevScore = typeof prev.score === 'number' ? prev.score : -1;
+                        const currScore = typeof current.score === 'number' ? current.score : -1;
+                        return currScore > prevScore ? current : prev;
+                    }, result.predictions[0]);
+
+                    document.getElementById('bestModelName').innerText = bestModelData.model;
+                    document.getElementById('bestModelScore').innerText = bestModelData.score !== 'N/A' ? `${bestModelData.score}` : 'N/A';
+                    const bestBadge = document.getElementById('bestModelGrade');
+                    bestBadge.className = `grade-badge grade-${bestModelData.grade}`;
+                    bestBadge.innerText = bestModelData.grade;
+
+                    document.getElementById('highestScoreModelName').innerText = highestScoreModelData.model;
+                    document.getElementById('highestScoreVal').innerText = highestScoreModelData.score !== 'N/A' ? `${highestScoreModelData.score}` : 'N/A';
+                    const highestBadge = document.getElementById('highestScoreGrade');
+                    highestBadge.className = `grade-badge grade-${highestScoreModelData.grade}`;
+                    highestBadge.innerText = highestScoreModelData.grade;
+
+                    result.predictions.forEach(item => {
+                        const row = document.createElement('tr');
+                        const badgeClass = `grade-${item.grade}`;
+                        const displayScore = item.score !== 'N/A' ? `${item.score} / 100` : 'N/A';
+
+                        row.innerHTML = `
+              <td class="fw-semibold">${item.model}</td>
+              <td>${displayScore}</td>
+              <td><span class="grade-badge ${badgeClass}">${item.grade}</span></td>
+            `;
+                        tableBody.appendChild(row);
+                    });
+
+                    renderChart(result.predictions, highestScoreModelData.model);
+                } else {
+                    errorAlert.innerText = result.error || 'Failed to generate predictions.';
+                    errorAlert.style.display = 'block';
+                }
+            } catch (err) {
+                errorAlert.innerText = 'Server error encountered. Verify Flask server logs.';
+                errorAlert.style.display = 'block';
+            } finally {
+                loadingIndicator.style.display = 'none';
+            }
+        }
+
+        /* Collapsible Explorer Functionality */
+        async function toggleExplorerSection() {
+            const explorerSec = document.getElementById('explorerSection');
+            const btnIcon = document.getElementById('explorerBtnIcon');
+            const btnText = document.getElementById('explorerBtnText');
+
+            if (explorerSec.style.display === 'none' || explorerSec.style.display === '') {
+                explorerSec.style.display = 'block';
+                btnIcon.innerText = '🔒';
+                btnText.innerText = 'Hide Model Evaluation Metrics';
+
+                if (!cachedMetadata) {
+                    await loadModelMetadata();
+                } else {
+                    updateExplorerChart();
+                }
+            } else {
+                explorerSec.style.display = 'none';
+                btnIcon.innerText = '🔍';
+                btnText.innerText = 'Explore Model Evaluation Metrics';
+            }
+        }
+
+        async function loadModelMetadata() {
+            try {
+                const response = await fetch('/metadata');
+                const data = await response.json();
+                if (data.success && data.models) {
+                    cachedMetadata = data.models;
+                    updateExplorerChart();
+                }
+            } catch (err) {
+                console.error('Failed to load metadata:', err);
+            }
+        }
+
+        /* Updated Explorer Chart: Every model uses its dedicated distinct color */
+        function updateExplorerChart() {
+            if (!cachedMetadata || cachedMetadata.length === 0) return;
+
+            const metric1Key = document.getElementById('metricSelect1').value;
+            const metric2Key = document.getElementById('metricSelect2').value;
+
+            const labels = cachedMetadata.map(m => m.model_name);
+            const metric1Data = cachedMetadata.map(m => (m.metrics && m.metrics[metric1Key] !== undefined) ? m.metrics[metric1Key] : 0);
+
+            const primaryBgColors = labels.map((name, idx) => getModelColors(name, idx).bg);
+            const primaryBorderColors = labels.map((name, idx) => getModelColors(name, idx).border);
+
+            const datasets = [
+                {
+                    label: metric1Key,
+                    data: metric1Data,
+                    backgroundColor: primaryBgColors,
+                    borderColor: primaryBorderColors,
+                    borderWidth: 1.5,
+                    borderRadius: 6,
+                    maxBarThickness: metric2Key !== 'none' ? 30 : 45
+                }
+            ];
+
+            if (metric2Key !== 'none') {
+                const metric2Data = cachedMetadata.map(m => (m.metrics && m.metrics[metric2Key] !== undefined) ? m.metrics[metric2Key] : 0);
+                const secondaryBgColors = labels.map((name, idx) => getModelColors(name, idx).secondaryBg);
+
+                datasets.push({
+                    label: metric2Key,
+                    data: metric2Data,
+                    backgroundColor: secondaryBgColors,
+                    borderColor: primaryBorderColors,
+                    borderWidth: 1.5,
+                    borderRadius: 6,
+                    maxBarThickness: 30
+                });
+            }
+
+            let allActiveValues = [...metric1Data];
+            if (metric2Key !== 'none') {
+                allActiveValues = allActiveValues.concat(cachedMetadata.map(m => m.metrics?.[metric2Key] || 0));
+            }
+            const maxVal = Math.max(...allActiveValues);
+
+            const canvas = document.getElementById('explorerChart');
+            const ctx = canvas.getContext('2d');
+
+            if (explorerChart) explorerChart.destroy();
+
+            explorerChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 400 },
+                    layout: { padding: { top: 25 } },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 12, weight: '600' }, color: '#212529' }
+                        },
+                        y: {
+                            suggestedMax: maxVal > 0 ? maxVal * 1.15 : 1,
+                            grid: { color: '#e9ecef', strokeDash: [4, 4] },
+                            ticks: { font: { size: 11 }, color: '#6c757d' }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: { font: { size: 12, weight: '600' } }
+                        },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            offset: 2,
+                            font: { weight: 'bold', size: 11 },
+                            color: '#333333',
+                            formatter: function (value) {
+                                if (typeof value !== 'number') return 'N/A';
+                                return value < 1 ? value.toFixed(4) : value.toFixed(2);
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputs = document.querySelectorAll('.live-input');
+            inputs.forEach(input => {
+                input.addEventListener('input', () => {
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(runPrediction, 150);
+                });
+                input.addEventListener('change', runPrediction);
+            });
+
+            runPrediction();
+        });
+    </script>
+</body>
+
+</html>

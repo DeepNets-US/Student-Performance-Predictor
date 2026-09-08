@@ -1,0 +1,16 @@
+{
+    "model_name": "LightGBM (Regularized)",
+    "model_type": "Gradient Boosting",
+    "metrics": {
+        "Model": "LightGBM (Regularized)",
+        "Train RMSE": 4.892413487558493,
+        "Test RMSE (OOF)": 6.460640874527153,
+        "RMSE Gap (Test - Train)": 1.56822738696866,
+        "Test MAE (OOF)": 5.13132365017547,
+        "Test R\u00b2 (OOF)": 0.6045919329366767,
+        "Grade Accuracy (OOF)": 0.5599999999999999,
+        "Grade Precision (OOF)": 0.5657639212037597,
+        "Grade Recall (OOF)": 0.5599999999999999,
+        "Grade F1-Score (OOF)": 0.5512718862467327
+    }
+}

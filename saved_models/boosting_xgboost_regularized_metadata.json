@@ -1,0 +1,16 @@
+{
+    "model_name": "XGBoost (Regularized)",
+    "model_type": "Gradient Boosting",
+    "metrics": {
+        "Model": "XGBoost (Regularized)",
+        "Train RMSE": 4.687551279653546,
+        "Test RMSE (OOF)": 6.531118985649388,
+        "RMSE Gap (Test - Train)": 1.8435677059958424,
+        "Test MAE (OOF)": 5.191462361145019,
+        "Test R\u00b2 (OOF)": 0.595559641850103,
+        "Grade Accuracy (OOF)": 0.5549999999999999,
+        "Grade Precision (OOF)": 0.5599001951477638,
+        "Grade Recall (OOF)": 0.5549999999999999,
+        "Grade F1-Score (OOF)": 0.5441675126901477
+    }
+}
