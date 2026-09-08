@@ -9,6 +9,7 @@
     <!-- Chart.js and Data Labels Plugin -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+
     <style>
         :root {
             --bg-body: #f8f9fa;
@@ -100,10 +101,10 @@
         }
 
         .grade-badge {
-            font-size: 1rem;
+            font-size: 0.9rem;
             font-weight: 700;
-            padding: 5px 10px;
-            border-radius: 8px;
+            padding: 4px 8px;
+            border-radius: 6px;
         }
 
         .grade-A {
@@ -194,10 +195,18 @@
 
         .table-view-wrapper {
             max-height: 320px;
+            height: auto;
             overflow-y: auto;
             border: 1px solid var(--border-color);
             border-radius: 12px;
             background: var(--bg-card);
+        }
+
+        .csv-table-wrapper {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
         }
 
         .toggle-explorer-btn {
@@ -229,7 +238,42 @@
             background-color: var(--bg-notice) !important;
             border-color: var(--border-notice) !important;
         }
+
+        /* Table Styles & Dark Mode Overrides */
+        .table {
+            --bs-table-bg: transparent;
+            --bs-table-color: var(--text-main);
+            --bs-table-border-color: var(--border-color);
+            color: var(--text-main);
+            margin-bottom: 0;
+        }
+
+        .table th {
+            background-color: var(--bg-tertiary) !important;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--border-color);
+            padding: 12px 16px;
+        }
+
+        .table td {
+            background-color: transparent !important;
+            color: var(--text-main);
+            padding: 12px 16px;
+            vertical-align: middle;
+        }
+
+        .table-hover tbody tr:hover td {
+            background-color: rgba(255, 255, 255, 0.03) !important;
+        }
+
+        [data-bs-theme="dark"] .table-hover tbody tr:hover td {
+            background-color: rgba(255, 255, 255, 0.05) !important;
+        }
     </style>
+
 </head>
 
 <body>
@@ -238,14 +282,14 @@
 
         <!-- Dark Mode Switcher Button -->
         <button class="btn btn-sm btn-outline-secondary dark-mode-toggle" id="themeToggleBtn" onclick="toggleTheme()">
-            🌙 Dark Mode
+            ☀️ Light Mode
         </button>
 
         <!-- Header -->
         <div class="text-center mb-4">
             <h1 class="fw-bold text-primary">Student Academic Performance Predictor</h1>
-            <p class="text-muted">Adjust feature controls or click a preset to see real-time performance predictions
-                across models.</p>
+            <p class="text-muted">Adjust feature controls, choose presets, or upload a CSV dataset for batch model
+                evaluation.</p>
         </div>
 
         <!-- Quick Archetype Presets -->
@@ -273,7 +317,18 @@
             <!-- LEFT COLUMN: Interactive Input Controls -->
             <div class="col-lg-6">
                 <div class="card p-4 h-100">
-                    <h5 class="fw-bold mb-3 text-primary">🎛️ Student Feature Controls</h5>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold mb-0 text-primary">🎛️ Student Feature Controls</h5>
+                        <!-- CSV Upload Controls -->
+                        <div>
+                            <input type="file" id="csvFileInput" accept=".csv" style="display: none;"
+                                onchange="handleCSVUpload(event)">
+                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-bold"
+                                onclick="document.getElementById('csvFileInput').click()" title="Upload CSV File">
+                                📤 Upload CSV
+                            </button>
+                        </div>
+                    </div>
                     <form id="predictionForm" onsubmit="event.preventDefault(); runPrediction();">
                         <div class="row g-3">
 
@@ -365,7 +420,7 @@
                             <div class="col-md-6">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <label for="study_time_hours" class="form-label fw-semibold mb-0 small">Study Time
-                                        (Hours/Day)</label>
+                                        (Hrs)</label>
                                     <span class="badge bg-primary val-badge" id="study_time_hours_val">3.6 hrs</span>
                                 </div>
                                 <input type="range" min="0.5" max="8.1" step="0.1" class="form-range live-input"
@@ -397,7 +452,7 @@
                             <div class="col-md-6">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <label for="sleep_hours" class="form-label fw-semibold mb-0 small">Sleep Duration
-                                        (Hours/Night)</label>
+                                        (Hrs)</label>
                                     <span class="badge bg-primary val-badge" id="sleep_hours_val">6.8 hrs</span>
                                 </div>
                                 <input type="range" min="3.2" max="10.0" step="0.1" class="form-range live-input"
@@ -531,6 +586,44 @@
 
         </div>
 
+        <!-- CSV RESULTS SECTION -->
+        <div id="csvResultsSection" class="card p-4 mb-4" style="display: none;">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <div>
+                    <h5 class="fw-bold mb-1 text-primary">📁 Batch Dataset Analysis Results</h5>
+                    <p class="text-muted small mb-0" id="csvSummaryText">Processed rows from uploaded CSV dataset.</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <!-- Export Button -->
+                    <button id="exportCsvBtn" class="btn btn-sm btn-success d-flex align-items-center gap-1"
+                        onclick="exportBatchTableToCSV('batch_analysis_results.csv')">
+                        <span>📥</span> Export CSV
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary"
+                        onclick="document.getElementById('csvResultsSection').style.display = 'none';">Dismiss</button>
+                </div>
+            </div>
+
+            <!-- Tabular View Container -->
+            <div class="csv-table-wrapper table-responsive">
+                <table class="table table-striped table-hover align-middle mb-0" id="csvBatchTable">
+                    <thead class="table-dark">
+                        <tr id="csvTableHeaderRow">
+                            <th scope="col"># Row</th>
+                            <th scope="col">Gender</th>
+                            <th scope="col">Parental Edu.</th>
+                            <th scope="col">Study Hrs</th>
+                            <th scope="col">Attendance</th>
+                            <th scope="col">Sleep Hrs</th>
+                            <th scope="col">Prev. Score</th>
+                        </tr>
+                    </thead>
+                    <tbody id="csvTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- EXPLORE MODELS SECTION (Collapsible) -->
         <div class="text-center my-4">
             <button class="btn btn-outline-primary toggle-explorer-btn" type="button" onclick="toggleExplorerSection()">
@@ -547,7 +640,7 @@
                 <span class="badge bg-secondary">Static Metadata Analysis</span>
             </div>
 
-            <!-- Metric Pickers: Primary Metric Defaults to Accuracy, Secondary Metric is Optional -->
+            <!-- Metric Pickers -->
             <div class="row g-3 mb-4 p-3 rounded custom-tertiary border">
                 <div class="col-md-6">
                     <label for="metricSelect1" class="form-label fw-semibold small text-primary">Primary Category
@@ -602,8 +695,6 @@
                 <strong>only 1,000 student entries</strong>.
                 Consequently, all interactive feature controls, valid input ranges, and model prediction outputs are
                 designed specifically with respect to this restricted distribution.
-                Users should keep this limited dataset size in mind and treat the prediction performance and outputs
-                accordingly rather than taking them for granted.
             </p>
             <div class="d-flex flex-wrap gap-2">
                 <a href="https://www.kaggle.com/code/utkarshsaxenadn/exam-score-prediction-most-robust-60-acc/notebook"
@@ -619,8 +710,7 @@
 
     </div>
 
-
-    <!-- Bootstrap 5 JS Script for Tabs -->
+    <!-- Bootstrap 5 JS Script -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         Chart.register(ChartDataLabels);
@@ -635,11 +725,138 @@
         };
 
         const BEST_MODEL_NAME = 'Bayesian Ridge';
-        let debounceTimer = null;
         let predictionChart = null;
         let explorerChart = null;
         let cachedMetadata = null;
         let currentPredictions = [];
+        let currentBatchData = null; // Stores entire batch dataset for export
+
+        // Dynamic CSV Upload Functionality
+        async function handleCSVUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const errorAlert = document.getElementById('errorAlert');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+
+            loadingIndicator.style.display = 'inline-block';
+            errorAlert.style.display = 'none';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/upload_csv', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    currentBatchData = result; // Save entire response for complete CSV export
+                    renderBatchResultsTable(result);
+                    if (result.aggregated_predictions) {
+                        updateDashboardSummary(result.aggregated_predictions);
+                        renderChart(result.aggregated_predictions);
+                    }
+                } else {
+                    let errMsg = result.error || 'Failed to evaluate CSV dataset.';
+                    if (result.details && result.details.length) {
+                        errMsg += ' Details: ' + result.details.join(' | ');
+                    }
+                    errorAlert.innerText = errMsg;
+                    errorAlert.style.display = 'block';
+                }
+            } catch (err) {
+                errorAlert.innerText = 'Error submitting file to server. Verify server connectivity.';
+                errorAlert.style.display = 'block';
+            } finally {
+                loadingIndicator.style.display = 'none';
+                event.target.value = '';
+            }
+        }
+
+        // Render uploaded CSV records in tabular format with separate Score and Grade columns
+        function renderBatchResultsTable(data) {
+            const resultsSection = document.getElementById('csvResultsSection');
+            const summaryText = document.getElementById('csvSummaryText');
+            const headerRow = document.getElementById('csvTableHeaderRow');
+            const tbody = document.getElementById('csvTableBody');
+
+            summaryText.innerText = `Evaluated ${data.total_records} rows from dataset. Displaying predictions for sample records:`;
+
+            if (!data.sample_row_predictions || data.sample_row_predictions.length === 0) return;
+
+            const firstSample = data.sample_row_predictions[0];
+            const modelNames = Object.keys(firstSample.predictions);
+
+            // Construct Dynamic Table Headers
+            headerRow.innerHTML = `
+                <th scope="col" class="text-nowrap">#</th>
+                <th scope="col" class="text-nowrap">Gender</th>
+                <th scope="col" class="text-nowrap">Parental Edu.</th>
+                <th scope="col" class="text-nowrap">Study Hrs</th>
+                <th scope="col" class="text-nowrap">Attendance</th>
+                <th scope="col" class="text-nowrap">Sleep Hrs</th>
+                <th scope="col" class="text-nowrap">Prev Score</th>
+            `;
+
+            // Append separate Score and Grade headers for each model
+            modelNames.forEach(model => {
+                const thScore = document.createElement('th');
+                thScore.scope = 'col';
+                thScore.className = 'text-primary text-nowrap';
+                thScore.innerText = `${model} Score`;
+
+                const thGrade = document.createElement('th');
+                thGrade.scope = 'col';
+                thGrade.className = 'text-primary text-nowrap';
+                thGrade.innerText = `${model} Grade`;
+
+                headerRow.appendChild(thScore);
+                headerRow.appendChild(thGrade);
+            });
+
+            // Populate Table Body Rows
+            tbody.innerHTML = '';
+            data.sample_row_predictions.forEach(item => {
+                const tr = document.createElement('tr');
+                const inp = item.inputs;
+
+                let rowHtml = `
+            <td class="fw-bold">${item.row_index}</td>
+            <td>${inp.gender || '-'}</td>
+            <td>${inp.parental_education || '-'}</td>
+            <td>${inp.study_time_hours !== undefined ? inp.study_time_hours : '-'}</td>
+            <td>${inp.attendance_percent !== undefined ? inp.attendance_percent : '-'}</td>
+            <td>${inp.sleep_hours !== undefined ? inp.sleep_hours : '-'}</td>
+            <td>${inp.previous_grade !== undefined ? inp.previous_grade : '-'}</td>
+        `;
+
+                // Render separate Score and Grade cells for each model
+                modelNames.forEach(model => {
+                    const pred = item.predictions[model];
+                    if (pred && pred.score !== 'N/A') {
+                        rowHtml += `
+                    <td class="fw-semibold text-nowrap">${pred.score}</td>
+                    <td><span class="grade-badge grade-${pred.grade}">${pred.grade}</span></td>
+                `;
+                    } else {
+                        rowHtml += `
+                    <td><span class="badge bg-secondary">N/A</span></td>
+                    <td><span class="badge bg-secondary">N/A</span></td>
+                `;
+                    }
+                });
+
+                tr.innerHTML = rowHtml;
+                tbody.appendChild(tr);
+            });
+
+            resultsSection.style.display = 'block';
+            resultsSection.scrollIntoView({ behavior: 'smooth' });
+        }
 
         // Theme Toggle Handler
         function toggleTheme() {
@@ -658,26 +875,23 @@
             }
         }
 
-        // Distinct color palette mapping for each unique model
+        // Distinct color palette mapping
         const MODEL_PALETTE = {
             'Bayesian Ridge': { bg: '#0d6efd', border: '#0a58ca', secondaryBg: '#6ea8fe' },
             'CatBoost': { bg: '#fd7e14', border: '#ca6510', secondaryBg: '#fecba1' },
             'LightGBM': { bg: '#198754', border: '#146c43', secondaryBg: '#75b798' },
             'XGBoost': { bg: '#d63384', border: '#ab296a', secondaryBg: '#e685b5' },
-            'Voting Regressor': { bg: '#6f42c1', border: '#59359a', secondaryBg: '#a98eda' },
+            'Voting Reg.': { bg: '#6f42c1', border: '#59359a', secondaryBg: '#a98eda' },
             'Random Forest': { bg: '#20c997', border: '#1aa179', secondaryBg: '#7ee2c4' },
             'Linear Regression': { bg: '#0dcaf0', border: '#0aa2c0', secondaryBg: '#6edff6' }
         };
 
-        // Fallback dynamic color generator for unknown model names
         const FALLBACK_COLORS = [
             { bg: '#0d6efd', border: '#0a58ca', secondaryBg: '#6ea8fe' },
             { bg: '#fd7e14', border: '#ca6510', secondaryBg: '#fecba1' },
             { bg: '#198754', border: '#146c43', secondaryBg: '#75b798' },
             { bg: '#d63384', border: '#ab296a', secondaryBg: '#e685b5' },
-            { bg: '#6f42c1', border: '#59359a', secondaryBg: '#a98eda' },
-            { bg: '#20c997', border: '#1aa179', secondaryBg: '#7ee2c4' },
-            { bg: '#ffc107', border: '#cc9a06', secondaryBg: '#ffe08a' }
+            { bg: '#6f42c1', border: '#59359a', secondaryBg: '#a98eda' }
         ];
 
         function getModelColors(modelName, index = 0) {
@@ -726,6 +940,43 @@
             updateLabel('previous_grade', preset.previous_grade);
 
             runPrediction();
+        }
+
+        function updateDashboardSummary(predictions) {
+            const tableBody = document.getElementById('predictionsTableBody');
+            tableBody.innerHTML = '';
+
+            const bestModelData = predictions.find(p => p.model === BEST_MODEL_NAME) || predictions[0];
+            const highestScoreModelData = predictions.reduce((prev, current) => {
+                const prevScore = typeof prev.score === 'number' ? prev.score : -1;
+                const currScore = typeof current.score === 'number' ? current.score : -1;
+                return currScore > prevScore ? current : prev;
+            }, predictions[0]);
+
+            document.getElementById('bestModelName').innerText = bestModelData.model;
+            document.getElementById('bestModelScore').innerText = bestModelData.score !== 'N/A' ? `${bestModelData.score}` : 'N/A';
+            const bestBadge = document.getElementById('bestModelGrade');
+            bestBadge.className = `grade-badge grade-${bestModelData.grade}`;
+            bestBadge.innerText = bestModelData.grade;
+
+            document.getElementById('highestScoreModelName').innerText = highestScoreModelData.model;
+            document.getElementById('highestScoreVal').innerText = highestScoreModelData.score !== 'N/A' ? `${highestScoreModelData.score}` : 'N/A';
+            const highestBadge = document.getElementById('highestScoreGrade');
+            highestBadge.className = `grade-badge grade-${highestScoreModelData.grade}`;
+            highestBadge.innerText = highestScoreModelData.grade;
+
+            predictions.forEach(item => {
+                const row = document.createElement('tr');
+                const badgeClass = `grade-${item.grade}`;
+                const displayScore = item.score !== 'N/A' ? `${item.score} / 100` : 'N/A';
+
+                row.innerHTML = `
+                    <td class="fw-semibold">${item.model}</td>
+                    <td>${displayScore}</td>
+                    <td><span class="grade-badge ${badgeClass}">${item.grade}</span></td>
+                `;
+                tableBody.appendChild(row);
+            });
         }
 
         /* Live Prediction Radar/Spider Chart */
@@ -810,8 +1061,8 @@
                             anchor: 'end',
                             align: 'top',
                             offset: 2,
-                            font: { weight: 'bold', size: 13 },
-                            color: isDark ? '#FFFFFF' : '#0d6efd',
+                            font: { weight: 'bold', size: 12 },
+                            color: isDark ? '#6ea8fe' : '#0d6efd',
                             formatter: function (value) {
                                 return value.toFixed(1);
                             }
@@ -822,7 +1073,6 @@
         }
 
         async function runPrediction() {
-            const tableBody = document.getElementById('predictionsTableBody');
             const errorAlert = document.getElementById('errorAlert');
             const loadingIndicator = document.getElementById('loadingIndicator');
 
@@ -831,14 +1081,14 @@
 
             const payload = {
                 gender: getRadioValue('gender'),
-                study_time_hours: parseFloat(document.getElementById('study_time_hours').value) || 0.5,
-                attendance_percent: parseFloat(document.getElementById('attendance_percent').value) || 54.8,
-                sleep_hours: parseFloat(document.getElementById('sleep_hours').value) || 3.2,
+                study_time_hours: parseFloat(document.getElementById('study_time_hours').value) || 0.0,
+                attendance_percent: parseFloat(document.getElementById('attendance_percent').value) || 0.0,
+                sleep_hours: parseFloat(document.getElementById('sleep_hours').value) || 0.0,
                 parental_education: getRadioValue('parental_education'),
                 internet_access: getRadioValue('internet_access'),
                 extracurricular_activities: getRadioValue('extracurricular_activities'),
                 part_time_job: getRadioValue('part_time_job'),
-                previous_grade: parseFloat(document.getElementById('previous_grade').value) || 31.3
+                previous_grade: parseFloat(document.getElementById('previous_grade').value) || 0.0
             };
 
             try {
@@ -851,40 +1101,7 @@
                 const result = await response.json();
 
                 if (result.success && result.predictions) {
-                    tableBody.innerHTML = '';
-
-                    const bestModelData = result.predictions.find(p => p.model === BEST_MODEL_NAME) || result.predictions[0];
-                    const highestScoreModelData = result.predictions.reduce((prev, current) => {
-                        const prevScore = typeof prev.score === 'number' ? prev.score : -1;
-                        const currScore = typeof current.score === 'number' ? current.score : -1;
-                        return currScore > prevScore ? current : prev;
-                    }, result.predictions[0]);
-
-                    document.getElementById('bestModelName').innerText = bestModelData.model;
-                    document.getElementById('bestModelScore').innerText = bestModelData.score !== 'N/A' ? `${bestModelData.score}` : 'N/A';
-                    const bestBadge = document.getElementById('bestModelGrade');
-                    bestBadge.className = `grade-badge grade-${bestModelData.grade}`;
-                    bestBadge.innerText = bestModelData.grade;
-
-                    document.getElementById('highestScoreModelName').innerText = highestScoreModelData.model;
-                    document.getElementById('highestScoreVal').innerText = highestScoreModelData.score !== 'N/A' ? `${highestScoreModelData.score}` : 'N/A';
-                    const highestBadge = document.getElementById('highestScoreGrade');
-                    highestBadge.className = `grade-badge grade-${highestScoreModelData.grade}`;
-                    highestBadge.innerText = highestScoreModelData.grade;
-
-                    result.predictions.forEach(item => {
-                        const row = document.createElement('tr');
-                        const badgeClass = `grade-${item.grade}`;
-                        const displayScore = item.score !== 'N/A' ? `${item.score} / 100` : 'N/A';
-
-                        row.innerHTML = `
-              <td class="fw-semibold">${item.model}</td>
-              <td>${displayScore}</td>
-              <td><span class="grade-badge ${badgeClass}">${item.grade}</span></td>
-            `;
-                        tableBody.appendChild(row);
-                    });
-
+                    updateDashboardSummary(result.predictions);
                     renderChart(result.predictions);
                 } else {
                     errorAlert.innerText = result.error || 'Failed to generate predictions.';
@@ -1061,6 +1278,80 @@
 
             runPrediction();
         });
+
+        function exportBatchTableToCSV(filename = 'batch_analysis_results.csv') {
+            // Fallback to table extraction if full batch data isn't available
+            if (!currentBatchData || !currentBatchData.sample_row_predictions || currentBatchData.sample_row_predictions.length === 0) {
+                alert('No batch dataset available to export.');
+                return;
+            }
+
+            // Determine dataset rows (use full set if available, or sample rows as fallback)
+            const records = currentBatchData.full_row_predictions || currentBatchData.sample_row_predictions;
+            const firstSample = records[0];
+            const modelNames = Object.keys(firstSample.predictions);
+
+            let csvRows = [];
+
+            // 1. Build Header Row
+            const headers = [
+                '# Row',
+                'Gender',
+                'Parental Edu.',
+                'Study Hrs',
+                'Attendance',
+                'Sleep Hrs',
+                'Prev Score'
+            ];
+
+            modelNames.forEach(model => {
+                headers.push(`${model} Score`);
+                headers.push(`${model} Grade`);
+            });
+
+            csvRows.push(headers.map(h => `"${h.replace(/"/g, '""')}"`).join(','));
+
+            // 2. Build Data Rows
+            records.forEach(item => {
+                const inp = item.inputs || {};
+                const rowData = [
+                    item.row_index,
+                    inp.gender ?? '',
+                    inp.parental_education ?? '',
+                    inp.study_time_hours ?? '',
+                    inp.attendance_percent ?? '',
+                    inp.sleep_hours ?? '',
+                    inp.previous_grade ?? ''
+                ];
+
+                modelNames.forEach(model => {
+                    const pred = item.predictions ? item.predictions[model] : null;
+                    if (pred && pred.score !== 'N/A') {
+                        rowData.push(pred.score);
+                        rowData.push(pred.grade);
+                    } else {
+                        rowData.push('N/A');
+                        rowData.push('N/A');
+                    }
+                });
+
+                csvRows.push(rowData.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','));
+            });
+
+            // 3. Trigger File Download
+            const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const downloadLink = document.createElement('a');
+
+            downloadLink.href = url;
+            downloadLink.setAttribute('download', filename);
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+
+            document.body.removeChild(downloadLink);
+            URL.revokeObjectURL(url);
+        }
+
     </script>
 </body>
 
