@@ -1,7 +1,9 @@
 import os
+import io
 import json
 import joblib
 import traceback
+import numpy as np
 import pandas as pd
 from flask import Flask, render_template, request, jsonify
 
@@ -13,6 +15,28 @@ MODEL_DIR = os.path.join(os.path.dirname(__file__), 'saved_models')
 # Stores for loaded model instances and metadata
 models = {}
 metadata = {}
+
+# Expected dataset schema definition and valid bounds/categories
+REQUIRED_SCHEMA = {
+    'gender': {'type': 'categorical', 'values': ['Male', 'Female']},
+    'parental_education': {'type': 'categorical', 'values': ['High School', 'Bachelors', 'Masters', 'PhD', 'Not Disclosed']},
+    'internet_access': {'type': 'categorical', 'values': ['Yes', 'No']},
+    'extracurricular_activities': {'type': 'categorical', 'values': ['Yes', 'No']},
+    'part_time_job': {'type': 'categorical', 'values': ['Yes', 'No']},
+    'study_time_hours': {'type': 'numeric', 'min': 0.0, 'max': 24.0},
+    'attendance_percent': {'type': 'numeric', 'min': 0.0, 'max': 100.0},
+    'sleep_hours': {'type': 'numeric', 'min': 0.0, 'max': 24.0},
+    'previous_grade': {'type': 'numeric', 'min': 0.0, 'max': 100.0}
+}
+
+# Categorical column definitions
+CATEGORICAL_COLS = [
+    'gender',
+    'parental_education',
+    'internet_access',
+    'extracurricular_activities',
+    'part_time_job'
+]
 
 # Data-driven Presets derived from student_performance_dataset.csv
 PRESETS = {
@@ -147,6 +171,98 @@ def map_score_to_letter_grade(score):
         return 'F'
 
 
+def prepare_dataframe(df):
+    """Converts categorical columns to Pandas 'category' dtypes for models."""
+    df_formatted = df.copy()
+
+    unwanted_features = [
+        col for col in df.columns if col not in REQUIRED_SCHEMA.keys()]
+    if unwanted_features:
+        print('Dropping Columns:', unwanted_features)
+        df_formatted = df_formatted.drop(columns=unwanted_features)
+
+    for col in CATEGORICAL_COLS:
+        if col in df_formatted.columns:
+            df_formatted[col] = df_formatted[col].astype('category')
+
+    print(df_formatted.info())
+    return df_formatted
+
+
+def validate_dataframe(df):
+    """
+    Validates dataframe columns, data types, nulls, and value constraints.
+    Returns exact row indices and offending values in error messages.
+    """
+    errors = []
+
+    # 1. Check for missing required columns
+    missing_cols = [col for col in REQUIRED_SCHEMA if col not in df.columns]
+    if missing_cols:
+        return False, [f"Missing required columns in dataset: {', '.join(missing_cols)}"]
+
+    # 2. Check for missing/null values with exact row locations
+    for col in REQUIRED_SCHEMA:
+        null_indices = df[df[col].isnull()].index.tolist()
+        if null_indices:
+            errors.append(
+                f"Column '{col}' contains {len(null_indices)} null value(s) at row index(es): {null_indices}"
+            )
+
+    # 3. Validate individual column schema rules
+    for col, rules in REQUIRED_SCHEMA.items():
+        if col not in df.columns:
+            continue
+
+        if rules['type'] == 'categorical':
+            # Extract non-null values that fall outside allowed categories
+            non_null_series = df[col].dropna().astype(str)
+            invalid_mask = ~non_null_series.isin(rules['values'])
+            invalid_rows = non_null_series[invalid_mask]
+
+            if not invalid_rows.empty:
+                invalid_summary = [
+                    f"Row {idx}: '{val}'" for idx, val in invalid_rows.items()
+                ]
+                errors.append(
+                    f"Column '{col}' contains invalid categorical values. "
+                    f"Expected allowed values: {rules['values']}. "
+                    f"Found {len(invalid_rows)} violation(s) -> {', '.join(invalid_summary)}"
+                )
+
+        elif rules['type'] == 'numeric':
+            if not pd.api.types.is_numeric_dtype(df[col]):
+                errors.append(
+                    f"Column '{col}' must contain numeric values, but found dtype '{df[col].dtype}'."
+                )
+            else:
+                min_bound, max_bound = rules['min'], rules['max']
+
+                # Check for out-of-bound lower values
+                too_low = df[df[col] < min_bound][col]
+                if not too_low.empty:
+                    low_summary = [
+                        f"Row {idx}: {val}" for idx, val in too_low.items()]
+                    errors.append(
+                        f"Column '{col}' has {len(too_low)} value(s) below min bound ({min_bound}). "
+                        f"Violations -> {', '.join(low_summary)}"
+                    )
+
+                # Check for out-of-bound upper values
+                too_high = df[df[col] > max_bound][col]
+                if not too_high.empty:
+                    high_summary = [
+                        f"Row {idx}: {val}" for idx, val in too_high.items()]
+                    errors.append(
+                        f"Column '{col}' has {len(too_high)} value(s) above max bound ({max_bound}). "
+                        f"Violations -> {', '.join(high_summary)}"
+                    )
+
+    if errors:
+        return False, errors
+    return True, []
+
+
 @app.route('/', methods=['GET'])
 def index():
     """Renders main dashboard interface."""
@@ -207,20 +323,7 @@ def predict():
             'previous_grade': [float(data.get('previous_grade', 0.0))]
         }
 
-        features_df = pd.DataFrame(input_dict)
-
-        # Cast categorical string columns to Pandas category dtype
-        categorical_cols = [
-            'gender',
-            'parental_education',
-            'internet_access',
-            'extracurricular_activities',
-            'part_time_job'
-        ]
-
-        for col in categorical_cols:
-            features_df[col] = features_df[col].astype('category')
-
+        features_df = prepare_dataframe(pd.DataFrame(input_dict))
         predictions = []
 
         for display_name, model in models.items():
@@ -253,6 +356,104 @@ def predict():
         print(f"\n[GLOBAL PREDICT ERROR] Request processing failed: {str(e)}")
         traceback.print_exc()
         return jsonify({'success': False, 'error': str(e)}), 400
+
+
+@app.route('/upload_csv', methods=['POST'])
+def upload_csv():
+    """Endpoint for uploading CSV datasets, schema validation, and running loaded models."""
+    if not models:
+        return jsonify({
+            'success': False,
+            'error': 'No models are currently loaded on the server.'
+        }), 500
+
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'error': 'No file attachment found in request.'}), 400
+
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'success': False, 'error': 'No selected file.'}), 400
+
+    if not file.filename.lower().endswith('.csv'):
+        return jsonify({'success': False, 'error': 'Invalid file format. Please upload a CSV file.'}), 400
+
+    try:
+        # Load uploaded file into pandas
+        df = pd.read_csv(io.StringIO(file.stream.read().decode("UTF-8")))
+
+        # Schema Validation
+        is_valid, validation_errors = validate_dataframe(df)
+        if not is_valid:
+            return jsonify({
+                'success': False,
+                'error': 'CSV Schema Validation Failed.',
+                'details': validation_errors
+            }), 400
+
+        # Cast categories for model input
+        formatted_df = prepare_dataframe(df)
+
+        aggregated_predictions = []
+        batch_row_results = []
+
+        # Predict across the whole batch for each model
+        for display_name, model in models.items():
+            try:
+                raw_preds = model.predict(formatted_df)
+                clipped_preds = np.clip(raw_preds, 0.0, 100.0)
+                avg_score = round(float(np.mean(clipped_preds)), 1)
+
+                aggregated_predictions.append({
+                    'model': display_name,
+                    'score': avg_score,
+                    'grade': map_score_to_letter_grade(avg_score)
+                })
+            except Exception as model_err:
+                print(
+                    f"[BATCH PREDICT ERROR] '{display_name}' failed: {str(model_err)}")
+                aggregated_predictions.append({
+                    'model': display_name,
+                    'score': 'N/A',
+                    'grade': 'Error'
+                })
+
+        # Calculate row-by-row outputs for response details
+        for idx, row in formatted_df.iterrows():
+            row_input = row.to_dict()
+            row_preds = {}
+            single_row_df = formatted_df.iloc[[idx]]
+
+            for display_name, model in models.items():
+                try:
+                    pred_val = float(model.predict(single_row_df)[0])
+                    score = round(max(0.0, min(100.0, pred_val)), 1)
+                    row_preds[display_name] = {
+                        'score': score,
+                        'grade': map_score_to_letter_grade(score)
+                    }
+                except Exception:
+                    row_preds[display_name] = {
+                        'score': 'N/A', 'grade': 'Error'}
+
+            batch_row_results.append({
+                'row_index': idx + 1,
+                'inputs': row_input,
+                'predictions': row_preds
+            })
+
+        return jsonify({
+            'success': True,
+            'total_records': len(df),
+            'aggregated_predictions': aggregated_predictions,
+            'predictions': aggregated_predictions,
+            'sample_row_predictions': batch_row_results[:20],
+            'full_row_predictions': batch_row_results  # Included for complete CSV export
+        })
+
+    except Exception as e:
+        print(f"[CSV PROCESSING ERROR]: {str(e)}")
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': f'Failed to process file: {str(e)}'}), 500
 
 
 if __name__ == '__main__':
