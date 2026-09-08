@@ -223,7 +223,6 @@ def predict():
 
         predictions = []
 
-        print('Inputs', features_df.values)
         for display_name, model in models.items():
             try:
                 raw_pred = model.predict(features_df)[0]
