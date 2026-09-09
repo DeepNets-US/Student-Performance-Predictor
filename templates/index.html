@@ -6,317 +6,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Performance Predictor</title>
 
-    <!-- Link to site.webmanifest -->
+    <!-- Web Manifest & External Libraries -->
     <link rel="manifest" href="{{ url_for('static', filename='favicon_io/site.webmanifest') }}">
-
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
     <!-- Chart.js and Data Labels Plugin -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
-
-    <style>
-        :root {
-            --bg-body: #f8f9fa;
-            --bg-card: #ffffff;
-            --bg-tertiary: #f8f9fa;
-            --bg-notice: #fff8e6;
-            --border-notice: #ffeba8;
-            --text-main: #212529;
-            --text-muted: #6c757d;
-            --border-color: #e9ecef;
-            --btn-toggle-bg: #ffffff;
-            --btn-toggle-color: #495057;
-            --btn-toggle-border: #dee2e6;
-            --chart-grid: #e9ecef;
-            --chart-tick: #6c757d;
-            --best-card-bg: linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%);
-            --highest-card-bg: linear-gradient(135deg, #f0fff4 0%, #ffffff 100%);
-
-            /* Grade Badge Variables (Light) */
-            --badge-a-bg: #d1e7dd;
-            --badge-a-text: #0f5132;
-            --badge-b-bg: #cff4fc;
-            --badge-b-text: #055160;
-            --badge-c-bg: #fff3cd;
-            --badge-c-text: #664d03;
-            --badge-d-bg: #ffe69c;
-            --badge-d-text: #856404;
-            --badge-f-bg: #f8d7da;
-            --badge-f-text: #842029;
-            --badge-err-bg: #e2e3e5;
-            --badge-err-text: #41464b;
-        }
-
-        [data-bs-theme="dark"] {
-            --bg-body: #0f172a;
-            --bg-card: #1e293b;
-            --bg-tertiary: #0f172a;
-            --bg-notice: #1c2536;
-            --border-notice: #856404;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --border-color: #334155;
-            --btn-toggle-bg: #1e293b;
-            --btn-toggle-color: #cbd5e1;
-            --btn-toggle-border: #475569;
-            --chart-grid: #334155;
-            --chart-tick: #94a3b8;
-            --best-card-bg: linear-gradient(135deg, #1e3a8a 0%, #1e293b 100%);
-            --highest-card-bg: linear-gradient(135deg, #064e3b 0%, #1e293b 100%);
-
-            /* Grade Badge Variables (Dark) */
-            --badge-a-bg: #0f5132;
-            --badge-a-text: #d1e7dd;
-            --badge-b-bg: #055160;
-            --badge-b-text: #cff4fc;
-            --badge-c-bg: #664d03;
-            --badge-c-text: #fff3cd;
-            --badge-d-bg: #856404;
-            --badge-d-text: #ffe69c;
-            --badge-f-bg: #842029;
-            --badge-f-text: #f8d7da;
-            --badge-err-bg: #41464b;
-            --badge-err-text: #e2e3e5;
-        }
-
-
-        body {
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
-
-        .card {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            color: var(--text-main);
-        }
-
-        .preset-btn {
-            transition: all 0.2s ease-in-out;
-            border-radius: 20px;
-            font-weight: 500;
-        }
-
-        .preset-btn:hover {
-            transform: translateY(-2px);
-        }
-
-        .grade-badge {
-            font-size: 0.9rem;
-            font-weight: 700;
-            padding: 4px 8px;
-            border-radius: 6px;
-        }
-
-        .grade-A {
-            background-color: var(--badge-a-bg);
-            color: var(--badge-a-text);
-        }
-
-        .grade-B {
-            background-color: var(--badge-b-bg);
-            color: var(--badge-b-text);
-        }
-
-        .grade-C {
-            background-color: var(--badge-c-bg);
-            color: var(--badge-c-text);
-        }
-
-        .grade-D {
-            background-color: var(--badge-d-bg);
-            color: var(--badge-d-text);
-        }
-
-        .grade-F {
-            background-color: var(--badge-f-bg);
-            color: var(--badge-f-text);
-        }
-
-        .grade-Error {
-            background-color: var(--badge-err-bg);
-            color: var(--badge-err-text);
-        }
-
-        .btn-group-toggle .btn {
-            border-radius: 20px !important;
-            margin-right: 4px;
-            margin-bottom: 4px;
-            font-weight: 500;
-            border: 1.5px solid var(--btn-toggle-border);
-            background-color: var(--btn-toggle-bg);
-            color: var(--btn-toggle-color);
-            transition: all 0.2s;
-        }
-
-        .btn-check:checked+.btn {
-            background-color: #0d6efd;
-            color: #ffffff;
-            border-color: #0d6efd;
-            box-shadow: 0 2px 6px rgba(13, 110, 253, 0.3);
-        }
-
-        .btn-group-toggle .btn:hover {
-            border-color: #0d6efd;
-        }
-
-        .form-range {
-            cursor: pointer;
-        }
-
-        .val-badge {
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-
-        .range-bounds {
-            font-size: 0.72rem;
-            color: var(--text-muted);
-        }
-
-        .best-model-card {
-            border: 2px solid #0d6efd;
-            background: var(--best-card-bg);
-            border-radius: 12px;
-        }
-
-        .highest-score-card {
-            border: 2px solid #198754;
-            background: var(--highest-card-bg);
-            border-radius: 12px;
-        }
-
-        .chart-wrapper {
-            background: var(--bg-card);
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
-            height: 320px;
-        }
-
-        .table-view-wrapper {
-            max-height: 320px;
-            height: auto;
-            overflow-y: auto;
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            background: var(--bg-card);
-        }
-
-        .csv-table-wrapper {
-            max-height: 400px;
-            overflow-y: auto;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-        }
-
-        .toggle-explorer-btn {
-            border-radius: 30px;
-            padding: 10px 24px;
-            font-weight: 600;
-        }
-
-        .nav-pills .nav-link {
-            font-size: 0.825rem;
-            font-weight: 600;
-            padding: 4px 12px;
-            border-radius: 6px;
-        }
-
-        .dark-mode-toggle {
-            position: absolute;
-            top: 20px;
-            right: 24px;
-            border-radius: 20px;
-            font-weight: 600;
-        }
-
-        .custom-tertiary {
-            background-color: var(--bg-tertiary) !important;
-        }
-
-        .custom-notice-card {
-            background-color: var(--bg-notice) !important;
-            border-color: var(--border-notice) !important;
-        }
-
-        /* Table Styles & Dark Mode Overrides */
-        .table {
-            --bs-table-bg: transparent;
-            --bs-table-color: var(--text-main);
-            --bs-table-border-color: var(--border-color);
-            color: var(--text-main);
-            margin-bottom: 0;
-        }
-
-        .table th {
-            background-color: var(--bg-tertiary) !important;
-            color: var(--text-muted);
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border-bottom: 2px solid var(--border-color);
-            padding: 12px 16px;
-        }
-
-        .table td {
-            background-color: transparent !important;
-            color: var(--text-main);
-            padding: 12px 16px;
-            vertical-align: middle;
-        }
-
-        .table-hover tbody tr:hover td {
-            background-color: rgba(255, 255, 255, 0.03) !important;
-        }
-
-        [data-bs-theme="dark"] .table-hover tbody tr:hover td {
-            background-color: rgba(255, 255, 255, 0.05) !important;
-        }
-
-        .rowRadarTooltip {
-            display: none;
-            position: absolute;
-            z-index: 1050;
-            width: 280px;
-            height: 280px;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-            padding: 10px;
-            pointer-events: none;
-        }
-    </style>
-
 </head>
 
 <body>
 
     <div class="container-fluid px-4 py-4 position-relative">
 
-        <!-- Floating Radar Chart Tooltip Container -->
-        <div id="rowRadarTooltip" class='rowRadarTooltip'>
+        <!-- Floating Radar Tooltip -->
+        <div id="rowRadarTooltip" class="rowRadarTooltip">
             <canvas id="rowRadarCanvas"></canvas>
         </div>
 
-        <!-- Dark Mode Switcher Button -->
+        <!-- Dark Mode Toggle Button -->
         <button class="btn btn-sm btn-outline-secondary dark-mode-toggle" id="themeToggleBtn" onclick="toggleTheme()">
             ☀️ Light Mode
         </button>
 
-        <!-- Header -->
+        <!-- Page Header -->
         <div class="text-center mb-4">
             <h1 class="fw-bold text-primary">Student Academic Performance Predictor</h1>
             <p class="text-muted">Adjust feature controls, choose presets, or upload a CSV dataset for batch model
                 evaluation.</p>
         </div>
 
-        <!-- Quick Archetype Presets -->
+        <!-- Archetype Presets -->
         <div class="card p-3 mb-4">
             <h6 class="fw-bold mb-2">⚡ Quick Archetype Presets</h6>
             <div class="d-flex flex-wrap gap-2">
@@ -335,103 +58,95 @@
             </div>
         </div>
 
-        <!-- MAIN ROW: Inputs (Left Column) + Model Outputs (Right Column) -->
+        <!-- Main Content Grid -->
         <div class="row g-4 mb-4">
 
-            <!-- LEFT COLUMN: Interactive Input Controls -->
+            <!-- Inputs Column -->
             <div class="col-lg-6">
                 <div class="card p-4 h-100">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="fw-bold mb-0 text-primary">🎛️ Student Feature Controls</h5>
-                        <!-- CSV Upload Controls -->
                         <div>
-                            <input type="file" id="csvFileInput" accept=".csv" style="display: none;"
+                            <input type="file" id="csvFileInput" accept=".csv" class="d-none"
                                 onchange="handleCSVUpload(event)">
                             <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-bold"
-                                onclick="document.getElementById('csvFileInput').click()" title="Upload CSV File">
+                                onclick="document.getElementById('csvFileInput').click()">
                                 📤 Upload CSV
                             </button>
                         </div>
                     </div>
+
                     <form id="predictionForm" onsubmit="event.preventDefault(); runPrediction();">
                         <div class="row g-3">
 
-                            <!-- Categorical Field: Gender -->
+                            <!-- Gender -->
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold d-block fs-7">Gender</label>
                                 <div class="btn-group-toggle" role="group">
                                     <input type="radio" class="btn-check live-input" name="gender" id="gender_male"
                                         value="Male" checked>
                                     <label class="btn btn-sm" for="gender_male">Male</label>
-
                                     <input type="radio" class="btn-check live-input" name="gender" id="gender_female"
                                         value="Female">
                                     <label class="btn btn-sm" for="gender_female">Female</label>
                                 </div>
                             </div>
 
-                            <!-- Categorical Field: Internet Access -->
+                            <!-- Internet Access -->
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold d-block fs-7">Internet Access</label>
                                 <div class="btn-group-toggle" role="group">
                                     <input type="radio" class="btn-check live-input" name="internet_access" id="net_yes"
                                         value="Yes" checked>
                                     <label class="btn btn-sm" for="net_yes">Yes</label>
-
                                     <input type="radio" class="btn-check live-input" name="internet_access" id="net_no"
                                         value="No">
                                     <label class="btn btn-sm" for="net_no">No</label>
                                 </div>
                             </div>
 
-                            <!-- Categorical Field: Parental Education Level -->
+                            <!-- Parental Education -->
                             <div class="col-12">
                                 <label class="form-label fw-semibold d-block fs-7">Parental Education Level</label>
                                 <div class="btn-group-toggle" role="group">
                                     <input type="radio" class="btn-check live-input" name="parental_education"
                                         id="edu_hs" value="High School" checked>
                                     <label class="btn btn-sm" for="edu_hs">High School</label>
-
                                     <input type="radio" class="btn-check live-input" name="parental_education"
                                         id="edu_bach" value="Bachelors">
                                     <label class="btn btn-sm" for="edu_bach">Bachelors</label>
-
                                     <input type="radio" class="btn-check live-input" name="parental_education"
                                         id="edu_mast" value="Masters">
                                     <label class="btn btn-sm" for="edu_mast">Masters</label>
-
                                     <input type="radio" class="btn-check live-input" name="parental_education"
                                         id="edu_phd" value="PhD">
                                     <label class="btn btn-sm" for="edu_phd">PhD</label>
-
                                     <input type="radio" class="btn-check live-input" name="parental_education"
                                         id="edu_nd" value="Not Disclosed">
                                     <label class="btn btn-sm" for="edu_nd">Not Disclosed</label>
                                 </div>
                             </div>
 
-                            <!-- Categorical Field: Extracurricular Activities -->
+                            <!-- Extracurricular Activities -->
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold d-block fs-7">Extracurriculars</label>
                                 <div class="btn-group-toggle" role="group">
                                     <input type="radio" class="btn-check live-input" name="extracurricular_activities"
                                         id="extra_yes" value="Yes">
                                     <label class="btn btn-sm" for="extra_yes">Yes</label>
-
                                     <input type="radio" class="btn-check live-input" name="extracurricular_activities"
                                         id="extra_no" value="No" checked>
                                     <label class="btn btn-sm" for="extra_no">No</label>
                                 </div>
                             </div>
 
-                            <!-- Categorical Field: Part-Time Job -->
+                            <!-- Part-Time Job -->
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold d-block fs-7">Part-Time Job</label>
                                 <div class="btn-group-toggle" role="group">
                                     <input type="radio" class="btn-check live-input" name="part_time_job" id="job_yes"
                                         value="Yes">
                                     <label class="btn btn-sm" for="job_yes">Yes</label>
-
                                     <input type="radio" class="btn-check live-input" name="part_time_job" id="job_no"
                                         value="No" checked>
                                     <label class="btn btn-sm" for="job_no">No</label>
@@ -440,7 +155,7 @@
 
                             <hr class="my-2 text-muted">
 
-                            <!-- Continuous Slider: Study Time -->
+                            <!-- Study Time Range -->
                             <div class="col-md-6">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <label for="study_time_hours" class="form-label fw-semibold mb-0 small">Study Time
@@ -456,7 +171,7 @@
                                 </div>
                             </div>
 
-                            <!-- Continuous Slider: Attendance Percent -->
+                            <!-- Attendance Percent Range -->
                             <div class="col-md-6">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <label for="attendance_percent" class="form-label fw-semibold mb-0 small">Attendance
@@ -472,7 +187,7 @@
                                 </div>
                             </div>
 
-                            <!-- Continuous Slider: Sleep Hours -->
+                            <!-- Sleep Hours Range -->
                             <div class="col-md-6">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <label for="sleep_hours" class="form-label fw-semibold mb-0 small">Sleep Duration
@@ -488,7 +203,7 @@
                                 </div>
                             </div>
 
-                            <!-- Continuous Slider: Previous Grade -->
+                            <!-- Previous Grade Range -->
                             <div class="col-md-6">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <label for="previous_grade" class="form-label fw-semibold mb-0 small">Previous
@@ -509,19 +224,18 @@
                 </div>
             </div>
 
-            <!-- RIGHT COLUMN: Model Predictions Output -->
+            <!-- Model Predictions Output -->
             <div class="col-lg-6">
                 <div class="card p-4 h-100" id="resultsCard">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="fw-bold mb-0 text-primary">🤖 Model Predictions Output</h5>
-                        <span id="loadingIndicator" class="badge bg-secondary" style="display: none;">Updating...</span>
+                        <span id="loadingIndicator" class="badge bg-secondary d-none">Updating...</span>
                     </div>
 
-                    <div id="errorAlert" class="alert alert-danger" style="display: none;"></div>
+                    <div id="errorAlert" class="alert alert-danger d-none"></div>
 
-                    <!-- Highlight Cards Row -->
+                    <!-- Highlight Cards -->
                     <div class="row g-2 mb-3">
-
                         <div class="col-md-6">
                             <div class="best-model-card p-3 h-100">
                                 <div class="d-flex align-items-center justify-content-between mb-1">
@@ -529,8 +243,7 @@
                                     <small class="text-primary fw-bold">Highest Accuracy</small>
                                 </div>
                                 <h6 class="fw-bold mb-1" id="bestModelName">Bayesian Ridge</h6>
-                                <p class="text-muted mb-2 extra-small" style="font-size: 0.75rem;">Top benchmark model.
-                                </p>
+                                <p class="text-muted mb-2 extra-small">Top benchmark model.</p>
                                 <div class="d-flex align-items-center justify-content-between mt-auto">
                                     <span class="fs-5 fw-bold text-primary" id="bestModelScore">--</span>
                                     <span class="grade-badge grade-Error" id="bestModelGrade">--</span>
@@ -545,49 +258,41 @@
                                     <small class="text-success fw-bold">Max Score</small>
                                 </div>
                                 <h6 class="fw-bold mb-1" id="highestScoreModelName">--</h6>
-                                <p class="text-muted mb-2 extra-small" style="font-size: 0.75rem;">Highest score
-                                    predicted.</p>
+                                <p class="text-muted mb-2 extra-small">Highest score predicted.</p>
                                 <div class="d-flex align-items-center justify-content-between mt-auto">
                                     <span class="fs-5 fw-bold text-success" id="highestScoreVal">--</span>
                                     <span class="grade-badge grade-Error" id="highestScoreGrade">--</span>
                                 </div>
                             </div>
                         </div>
-
                     </div>
 
-                    <!-- Section Header with View Mode Toggle Tabs -->
+                    <!-- Chart vs Table View Controls -->
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <h6 class="fw-bold mb-0 text-secondary">📊 Benchmark Performance</h6>
                         <ul class="nav nav-pills custom-tertiary p-1 rounded border" id="viewToggleTabs" role="tablist">
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link active" id="radar-tab" data-bs-toggle="pill"
-                                    data-bs-target="#radarView" type="button" role="tab" aria-controls="radarView"
-                                    aria-selected="true">🕸️ Radar Chart</button>
+                                    data-bs-target="#radarView" type="button" role="tab">🕸️ Radar Chart</button>
                             </li>
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link" id="table-tab" data-bs-toggle="pill"
-                                    data-bs-target="#tableView" type="button" role="tab" aria-controls="tableView"
-                                    aria-selected="false">📋 Table</button>
+                                    data-bs-target="#tableView" type="button" role="tab">📋 Table</button>
                             </li>
                         </ul>
                     </div>
 
-                    <!-- Tab Content Area -->
+                    <!-- View Tab Contents -->
                     <div class="tab-content" id="viewToggleContent">
-
-                        <!-- Radar Chart Tab View -->
-                        <div class="tab-pane fade show active" id="radarView" role="tabpanel"
-                            aria-labelledby="radar-tab">
+                        <div class="tab-pane fade show active" id="radarView" role="tabpanel">
                             <div class="chart-wrapper">
-                                <div style="height: 100%; position: relative;">
+                                <div class="chart-inner-container">
                                     <canvas id="predictionChart"></canvas>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Table Tab View -->
-                        <div class="tab-pane fade" id="tableView" role="tabpanel" aria-labelledby="table-tab">
+                        <div class="tab-pane fade" id="tableView" role="tabpanel">
                             <div class="table-view-wrapper table-responsive">
                                 <table class="table table-hover align-middle mb-0">
                                     <thead>
@@ -597,12 +302,10 @@
                                             <th scope="col">Grade</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="predictionsTableBody">
-                                    </tbody>
+                                    <tbody id="predictionsTableBody"></tbody>
                                 </table>
                             </div>
                         </div>
-
                     </div>
 
                 </div>
@@ -610,25 +313,23 @@
 
         </div>
 
-        <!-- CSV RESULTS SECTION -->
-        <div id="csvResultsSection" class="card p-4 mb-4" style="display: none;">
+        <!-- CSV Batch Analysis Section -->
+        <div id="csvResultsSection" class="card p-4 mb-4 d-none">
             <div class="d-flex align-items-center justify-content-between mb-3">
                 <div>
                     <h5 class="fw-bold mb-1 text-primary">📁 Batch Dataset Analysis Results</h5>
                     <p class="text-muted small mb-0" id="csvSummaryText">Processed rows from uploaded CSV dataset.</p>
                 </div>
                 <div class="d-flex gap-2">
-                    <!-- Export Button -->
                     <button id="exportCsvBtn" class="btn btn-sm btn-success d-flex align-items-center gap-1"
                         onclick="exportBatchTableToCSV('batch_analysis_results.csv')">
                         <span>📥</span> Export CSV
                     </button>
                     <button class="btn btn-sm btn-outline-secondary"
-                        onclick="document.getElementById('csvResultsSection').style.display = 'none';">Dismiss</button>
+                        onclick="document.getElementById('csvResultsSection').classList.add('d-none')">Dismiss</button>
                 </div>
             </div>
 
-            <!-- Tabular View Container -->
             <div class="csv-table-wrapper table-responsive">
                 <table class="table table-striped table-hover align-middle mb-0" id="csvBatchTable">
                     <thead class="table-dark">
@@ -642,73 +343,12 @@
                             <th scope="col">Prev. Score</th>
                         </tr>
                     </thead>
-                    <tbody id="csvTableBody">
-                    </tbody>
+                    <tbody id="csvTableBody"></tbody>
                 </table>
             </div>
         </div>
 
-        <!-- EXPLORE MODELS SECTION (Collapsible) -->
-        <div class="text-center my-4">
-            <button class="btn btn-outline-primary toggle-explorer-btn" type="button" onclick="toggleExplorerSection()">
-                <span id="explorerBtnIcon">🔍</span> <span id="explorerBtnText">Explore Model Evaluation Metrics</span>
-            </button>
-        </div>
-
-        <div id="explorerSection" class="card p-4 mb-4" style="display: none;">
-            <div class="d-flex align-items-center justify-content-between mb-3">
-                <div>
-                    <h5 class="fw-bold mb-1 text-body">🔬 Offline Model Metrics Explorer</h5>
-                    <p class="text-muted small mb-0">Compare offline model evaluation metrics directly on the chart.</p>
-                </div>
-                <span class="badge bg-secondary">Static Metadata Analysis</span>
-            </div>
-
-            <!-- Metric Pickers -->
-            <div class="row g-3 mb-4 p-3 rounded custom-tertiary border">
-                <div class="col-md-6">
-                    <label for="metricSelect1" class="form-label fw-semibold small text-primary">Primary Category
-                        Metric</label>
-                    <select id="metricSelect1" class="form-select form-select-sm" onchange="updateExplorerChart()">
-                        <option value="Grade Accuracy (OOF)" selected>Grade Accuracy (OOF)</option>
-                        <option value="Grade Precision (OOF)">Grade Precision (OOF)</option>
-                        <option value="Grade Recall (OOF)">Grade Recall (OOF)</option>
-                        <option value="Grade F1-Score (OOF)">Grade F1-Score (OOF)</option>
-                        <option value="Test R² (OOF)">Test R² (OOF)</option>
-                        <option value="Test RMSE (OOF)">Test RMSE (OOF)</option>
-                        <option value="Train RMSE">Train RMSE</option>
-                        <option value="RMSE Gap (Test - Train)">RMSE Gap (Test - Train)</option>
-                        <option value="Test MAE (OOF)">Test MAE (OOF)</option>
-                    </select>
-                </div>
-
-                <div class="col-md-6">
-                    <label for="metricSelect2" class="form-label fw-semibold small text-success">Secondary Category
-                        Metric (Optional)</label>
-                    <select id="metricSelect2" class="form-select form-select-sm" onchange="updateExplorerChart()">
-                        <option value="none" selected>-- None (Single Category View) --</option>
-                        <option value="Grade Accuracy (OOF)">Grade Accuracy (OOF)</option>
-                        <option value="Grade Precision (OOF)">Grade Precision (OOF)</option>
-                        <option value="Grade Recall (OOF)">Grade Recall (OOF)</option>
-                        <option value="Grade F1-Score (OOF)">Grade F1-Score (OOF)</option>
-                        <option value="Test R² (OOF)">Test R² (OOF)</option>
-                        <option value="Test RMSE (OOF)">Test RMSE (OOF)</option>
-                        <option value="Train RMSE">Train RMSE</option>
-                        <option value="RMSE Gap (Test - Train)">RMSE Gap (Test - Train)</option>
-                        <option value="Test MAE (OOF)">Test MAE (OOF)</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Explorer Bar Chart Container -->
-            <div class="chart-wrapper" style="height: 380px;">
-                <div style="height: 100%; position: relative;">
-                    <canvas id="explorerChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- DATASET & NOTEBOOK REFERENCE FOOTER NOTE -->
+        <!-- Footer Notice -->
         <div class="card p-4 mt-4 custom-notice-card">
             <div class="d-flex align-items-center mb-2">
                 <span class="fs-4 me-2">⚠️</span>
@@ -734,801 +374,9 @@
 
     </div>
 
-    <!-- Bootstrap 5 JS Script -->
+    <!-- JavaScript Dependencies & App Script -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        Chart.register(ChartDataLabels);
-
-        const PRESETS = {
-            scholar: { gender: 'Male', study_time_hours: 5.9, attendance_percent: 100.0, sleep_hours: 7.3, parental_education: 'Bachelors', internet_access: 'Yes', extracurricular_activities: 'Yes', part_time_job: 'No', previous_grade: 89.8 },
-            turnaround: { gender: 'Male', study_time_hours: 4.6, attendance_percent: 100.0, sleep_hours: 5.8, parental_education: 'Masters', internet_access: 'Yes', extracurricular_activities: 'Yes', part_time_job: 'No', previous_grade: 37.5 },
-            at_risk: { gender: 'Female', study_time_hours: 1.9, attendance_percent: 69.0, sleep_hours: 6.0, parental_education: 'High School', internet_access: 'Yes', extracurricular_activities: 'No', part_time_job: 'Yes', previous_grade: 34.5 },
-            multitasker: { gender: 'Female', study_time_hours: 6.3, attendance_percent: 100.0, sleep_hours: 5.7, parental_education: 'High School', internet_access: 'Yes', extracurricular_activities: 'Yes', part_time_job: 'Yes', previous_grade: 75.5 },
-            passive: { gender: 'Male', study_time_hours: 1.5, attendance_percent: 100.0, sleep_hours: 5.0, parental_education: 'High School', internet_access: 'Yes', extracurricular_activities: 'Yes', part_time_job: 'Yes', previous_grade: 58.6 },
-            baseline: { gender: 'Male', study_time_hours: 3.6, attendance_percent: 85.0, sleep_hours: 6.8, parental_education: 'High School', internet_access: 'Yes', extracurricular_activities: 'No', part_time_job: 'No', previous_grade: 69.7 }
-        };
-
-        const BEST_MODEL_NAME = 'Bayesian Ridge';
-        let predictionChart = null;
-        let explorerChart = null;
-        let cachedMetadata = null;
-        let currentPredictions = [];
-        let currentBatchData = null; // Stores entire batch dataset for export
-        let rowRadarChart = null;
-        const tooltipContainer = document.getElementById('rowRadarTooltip');
-
-        // Dynamic CSV Upload Functionality
-        async function handleCSVUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const errorAlert = document.getElementById('errorAlert');
-            const loadingIndicator = document.getElementById('loadingIndicator');
-
-            loadingIndicator.style.display = 'inline-block';
-            errorAlert.style.display = 'none';
-
-            const formData = new FormData();
-            formData.append('file', file);
-
-            try {
-                const response = await fetch('/upload_csv', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    currentBatchData = result; // Save entire response for complete CSV export
-                    renderBatchResultsTable(result);
-                    if (result.aggregated_predictions) {
-                        updateDashboardSummary(result.aggregated_predictions);
-                        renderChart(result.aggregated_predictions);
-                    }
-                } else {
-                    let errMsg = result.error || 'Failed to evaluate CSV dataset.';
-                    if (result.details && result.details.length) {
-                        errMsg += ' Details: ' + result.details.join(' | ');
-                    }
-                    errorAlert.innerText = errMsg;
-                    errorAlert.style.display = 'block';
-                }
-            } catch (err) {
-                errorAlert.innerText = 'Error submitting file to server. Verify server connectivity.';
-                errorAlert.style.display = 'block';
-            } finally {
-                loadingIndicator.style.display = 'none';
-                event.target.value = '';
-            }
-        }
-
-        // Render uploaded CSV records in tabular format with separate Score and Grade columns
-        function renderBatchResultsTable(data) {
-            const resultsSection = document.getElementById('csvResultsSection');
-            const summaryText = document.getElementById('csvSummaryText');
-            const headerRow = document.getElementById('csvTableHeaderRow');
-            const tbody = document.getElementById('csvTableBody');
-
-            summaryText.innerText = `Evaluated ${data.total_records} rows from dataset. Displaying predictions for sample records:`;
-
-            if (!data.sample_row_predictions || data.sample_row_predictions.length === 0) return;
-
-            const firstSample = data.sample_row_predictions[0];
-            const modelNames = Object.keys(firstSample.predictions);
-
-            // Construct Dynamic Table Headers (Schema Order)
-            headerRow.innerHTML = `
-                <th scope="col" class="text-nowrap">#</th>
-                <th scope="col" class="text-nowrap">Gender</th>
-                <th scope="col" class="text-nowrap">Study Hrs</th>
-                <th scope="col" class="text-nowrap">Attendance (%)</th>
-                <th scope="col" class="text-nowrap">Sleep Hrs</th>
-                <th scope="col" class="text-nowrap">Parental Edu.</th>
-                <th scope="col" class="text-nowrap">Internet Access</th>
-                <th scope="col" class="text-nowrap">Extracurriculars</th>
-                <th scope="col" class="text-nowrap">Part-Time Job</th>
-                <th scope="col" class="text-nowrap">Prev Grade</th>
-            `;
-
-            // Append separate Score and Grade headers for each model
-            modelNames.forEach(model => {
-                const thScore = document.createElement('th');
-                thScore.scope = 'col';
-                thScore.className = 'text-primary text-nowrap';
-                thScore.innerText = `${model} Score`;
-
-                const thGrade = document.createElement('th');
-                thGrade.scope = 'col';
-                thGrade.className = 'text-primary text-nowrap';
-                thGrade.innerText = `${model} Grade`;
-
-                headerRow.appendChild(thScore);
-                headerRow.appendChild(thGrade);
-            });
-
-            // Populate Table Body Rows
-            tbody.innerHTML = '';
-            data.sample_row_predictions.forEach(item => {
-                const tr = document.createElement('tr');
-                tr.style.cursor = 'pointer'; // Visual indicator for hoverable row
-                const inp = item.inputs;
-
-                let rowHtml = `
-                    <td class="fw-bold">${item.row_index}</td>
-                    <td>${inp.gender || '-'}</td>
-                    <td>${inp.study_time_hours !== undefined ? inp.study_time_hours : '-'}</td>
-                    <td>${inp.attendance_percent !== undefined ? inp.attendance_percent : '-'}</td>
-                    <td>${inp.sleep_hours !== undefined ? inp.sleep_hours : '-'}</td>
-                    <td>${inp.parental_education || '-'}</td>
-                    <td>${inp.internet_access || '-'}</td>
-                    <td>${inp.extracurricular_activities || '-'}</td>
-                    <td>${inp.part_time_job || '-'}</td>
-                    <td>${inp.previous_grade !== undefined ? inp.previous_grade : '-'}</td>
-                `;
-
-                // Render separate Score and Grade cells for each model
-                modelNames.forEach(model => {
-                    const pred = item.predictions[model];
-                    if (pred && pred.score !== 'N/A') {
-                        rowHtml += `
-                    <td class="fw-semibold text-nowrap">${pred.score}</td>
-                    <td><span class="grade-badge grade-${pred.grade}">${pred.grade}</span></td>
-                `;
-                    } else {
-                        rowHtml += `
-                    <td><span class="badge bg-secondary">N/A</span></td>
-                    <td><span class="badge bg-secondary">N/A</span></td>
-                `;
-                    }
-                });
-
-                tr.innerHTML = rowHtml;
-
-                // --- Add Mouse Hover Event Handlers ---
-                tr.addEventListener('mouseenter', (e) => {
-                    renderRowRadarTooltip(item.predictions);
-                    tooltipContainer.style.display = 'block';
-                    updateTooltipPosition(e);
-                });
-
-                tr.addEventListener('mousemove', (e) => {
-                    updateTooltipPosition(e);
-                });
-
-                tr.addEventListener('mouseleave', () => {
-                    tooltipContainer.style.display = 'none';
-                });
-                tbody.appendChild(tr);
-            });
-
-            resultsSection.style.display = 'block';
-            resultsSection.scrollIntoView({ behavior: 'smooth' });
-        }
-
-        // Theme Toggle Handler
-        function toggleTheme() {
-            const htmlTag = document.documentElement;
-            const currentTheme = htmlTag.getAttribute('data-bs-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-
-            htmlTag.setAttribute('data-bs-theme', newTheme);
-            document.getElementById('themeToggleBtn').innerText = newTheme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
-
-            if (currentPredictions.length) {
-                renderChart(currentPredictions);
-            }
-            if (cachedMetadata) {
-                updateExplorerChart();
-            }
-        }
-
-        // Distinct color palette mapping
-        const MODEL_PALETTE = {
-            'Bayesian Ridge': { bg: '#0d6efd', border: '#0a58ca', secondaryBg: '#6ea8fe' },
-            'CatBoost': { bg: '#fd7e14', border: '#ca6510', secondaryBg: '#fecba1' },
-            'LightGBM': { bg: '#198754', border: '#146c43', secondaryBg: '#75b798' },
-            'XGBoost': { bg: '#d63384', border: '#ab296a', secondaryBg: '#e685b5' },
-            'Voting Reg.': { bg: '#6f42c1', border: '#59359a', secondaryBg: '#a98eda' },
-            'Random Forest': { bg: '#20c997', border: '#1aa179', secondaryBg: '#7ee2c4' },
-            'Linear Regression': { bg: '#0dcaf0', border: '#0aa2c0', secondaryBg: '#6edff6' }
-        };
-
-        const FALLBACK_COLORS = [
-            { bg: '#0d6efd', border: '#0a58ca', secondaryBg: '#6ea8fe' },
-            { bg: '#fd7e14', border: '#ca6510', secondaryBg: '#fecba1' },
-            { bg: '#198754', border: '#146c43', secondaryBg: '#75b798' },
-            { bg: '#d63384', border: '#ab296a', secondaryBg: '#e685b5' },
-            { bg: '#6f42c1', border: '#59359a', secondaryBg: '#a98eda' }
-        ];
-
-        function getModelColors(modelName, index = 0) {
-            if (MODEL_PALETTE[modelName]) return MODEL_PALETTE[modelName];
-            for (const key in MODEL_PALETTE) {
-                if (modelName.toLowerCase().includes(key.toLowerCase())) {
-                    return MODEL_PALETTE[key];
-                }
-            }
-            return FALLBACK_COLORS[index % FALLBACK_COLORS.length];
-        }
-
-        function updateLabel(id, text) {
-            const badge = document.getElementById(id + '_val');
-            if (badge) badge.innerText = text;
-        }
-
-        function getRadioValue(name) {
-            const checked = document.querySelector(`input[name="${name}"]:checked`);
-            return checked ? checked.value : '';
-        }
-
-        function setRadioValue(name, value) {
-            const target = document.querySelector(`input[name="${name}"][value="${value}"]`);
-            if (target) target.checked = true;
-        }
-
-        function applyPreset(presetKey) {
-            const preset = PRESETS[presetKey];
-            if (!preset) return;
-
-            setRadioValue('gender', preset.gender);
-            setRadioValue('parental_education', preset.parental_education);
-            setRadioValue('internet_access', preset.internet_access);
-            setRadioValue('extracurricular_activities', preset.extracurricular_activities);
-            setRadioValue('part_time_job', preset.part_time_job);
-
-            document.getElementById('study_time_hours').value = preset.study_time_hours;
-            document.getElementById('attendance_percent').value = preset.attendance_percent;
-            document.getElementById('sleep_hours').value = preset.sleep_hours;
-            document.getElementById('previous_grade').value = preset.previous_grade;
-
-            updateLabel('study_time_hours', preset.study_time_hours + ' hrs');
-            updateLabel('attendance_percent', preset.attendance_percent);
-            updateLabel('sleep_hours', preset.sleep_hours + ' hrs');
-            updateLabel('previous_grade', preset.previous_grade);
-
-            runPrediction();
-        }
-
-        function updateDashboardSummary(predictions) {
-            const tableBody = document.getElementById('predictionsTableBody');
-            tableBody.innerHTML = '';
-
-            const bestModelData = predictions.find(p => p.model === BEST_MODEL_NAME) || predictions[0];
-            const highestScoreModelData = predictions.reduce((prev, current) => {
-                const prevScore = typeof prev.score === 'number' ? prev.score : -1;
-                const currScore = typeof current.score === 'number' ? current.score : -1;
-                return currScore > prevScore ? current : prev;
-            }, predictions[0]);
-
-            document.getElementById('bestModelName').innerText = bestModelData.model;
-            document.getElementById('bestModelScore').innerText = bestModelData.score !== 'N/A' ? `${bestModelData.score}` : 'N/A';
-            const bestBadge = document.getElementById('bestModelGrade');
-            bestBadge.className = `grade-badge grade-${bestModelData.grade}`;
-            bestBadge.innerText = bestModelData.grade;
-
-            document.getElementById('highestScoreModelName').innerText = highestScoreModelData.model;
-            document.getElementById('highestScoreVal').innerText = highestScoreModelData.score !== 'N/A' ? `${highestScoreModelData.score}` : 'N/A';
-            const highestBadge = document.getElementById('highestScoreGrade');
-            highestBadge.className = `grade-badge grade-${highestScoreModelData.grade}`;
-            highestBadge.innerText = highestScoreModelData.grade;
-
-            predictions.forEach(item => {
-                const row = document.createElement('tr');
-                const badgeClass = `grade-${item.grade}`;
-                const displayScore = item.score !== 'N/A' ? `${item.score} / 100` : 'N/A';
-
-                row.innerHTML = `
-                    <td class="fw-semibold">${item.model}</td>
-                    <td>${displayScore}</td>
-                    <td><span class="grade-badge ${badgeClass}">${item.grade}</span></td>
-                `;
-                tableBody.appendChild(row);
-            });
-        }
-
-        /* Live Prediction Radar/Spider Chart */
-        function renderChart(predictions) {
-            currentPredictions = predictions;
-            const canvas = document.getElementById('predictionChart');
-            const ctx = canvas.getContext('2d');
-
-            const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
-            const tickColor = isDark ? '#94a3b8' : '#6c757d';
-            const gridColor = isDark ? '#334155' : '#e9ecef';
-            const labelColor = isDark ? '#f8fafc' : '#212529';
-
-            const labels = predictions.map(p => p.model);
-            const scores = predictions.map(p => typeof p.score === 'number' ? p.score : 0);
-            const grades = predictions.map(p => p.grade || 'N/A');
-
-            const minVal = Math.min(...scores);
-            const maxVal = Math.max(...scores);
-
-            const rMin = Math.max(0, Math.floor(minVal - 6));
-            const rMax = Math.min(105, Math.ceil(maxVal + 6));
-
-            const pointBackgroundColors = labels.map((name, idx) => getModelColors(name, idx).bg);
-            const pointBorderColors = labels.map((name, idx) => getModelColors(name, idx).border);
-
-            if (predictionChart) predictionChart.destroy();
-
-            predictionChart = new Chart(ctx, {
-                type: 'radar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Predicted Score',
-                        data: scores,
-                        backgroundColor: isDark ? 'rgba(13, 110, 253, 0.35)' : 'rgba(13, 110, 253, 0.2)',
-                        borderColor: '#0d6efd',
-                        borderWidth: 2,
-                        pointBackgroundColor: pointBackgroundColors,
-                        pointBorderColor: pointBorderColors,
-                        pointHoverBackgroundColor: '#ffffff',
-                        pointHoverBorderColor: '#0d6efd',
-                        pointRadius: 6,
-                        pointHoverRadius: 8
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: { duration: 500 },
-                    scales: {
-                        r: {
-                            min: rMin,
-                            max: rMax,
-                            ticks: {
-                                stepSize: Math.ceil((rMax - rMin) / 4) || 5,
-                                font: { size: 11 },
-                                color: tickColor,
-                                backdropColor: 'transparent'
-                            },
-                            grid: { color: gridColor },
-                            angleLines: { color: gridColor },
-                            pointLabels: {
-                                font: { size: 12, weight: '600' },
-                                color: labelColor
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function (context) {
-                                    const index = context.dataIndex;
-                                    const score = context.raw;
-                                    const grade = grades[index];
-                                    return ` Score: ${score.toFixed(1)} | Grade: ${grade}`;
-                                }
-                            }
-                        },
-                        datalabels: {
-                            anchor: 'end',
-                            align: 'top',
-                            offset: 2,
-                            font: { weight: 'bold', size: 12 },
-                            color: isDark ? '#6ea8fe' : '#0d6efd',
-                            formatter: function (value) {
-                                return value.toFixed(1);
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        async function runPrediction() {
-            const errorAlert = document.getElementById('errorAlert');
-            const loadingIndicator = document.getElementById('loadingIndicator');
-
-            loadingIndicator.style.display = 'inline-block';
-            errorAlert.style.display = 'none';
-
-            const payload = {
-                gender: getRadioValue('gender'),
-                study_time_hours: parseFloat(document.getElementById('study_time_hours').value) || 0.0,
-                attendance_percent: parseFloat(document.getElementById('attendance_percent').value) || 0.0,
-                sleep_hours: parseFloat(document.getElementById('sleep_hours').value) || 0.0,
-                parental_education: getRadioValue('parental_education'),
-                internet_access: getRadioValue('internet_access'),
-                extracurricular_activities: getRadioValue('extracurricular_activities'),
-                part_time_job: getRadioValue('part_time_job'),
-                previous_grade: parseFloat(document.getElementById('previous_grade').value) || 0.0
-            };
-
-            try {
-                const response = await fetch('/predict', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                const result = await response.json();
-
-                if (result.success && result.predictions) {
-                    updateDashboardSummary(result.predictions);
-                    renderChart(result.predictions);
-                } else {
-                    errorAlert.innerText = result.error || 'Failed to generate predictions.';
-                    errorAlert.style.display = 'block';
-                }
-            } catch (err) {
-                errorAlert.innerText = 'Server error encountered. Verify Flask server logs.';
-                errorAlert.style.display = 'block';
-            } finally {
-                loadingIndicator.style.display = 'none';
-            }
-        }
-
-        /* Collapsible Explorer Functionality */
-        async function toggleExplorerSection() {
-            const explorerSec = document.getElementById('explorerSection');
-            const btnIcon = document.getElementById('explorerBtnIcon');
-            const btnText = document.getElementById('explorerBtnText');
-
-            if (explorerSec.style.display === 'none' || explorerSec.style.display === '') {
-                explorerSec.style.display = 'block';
-                btnIcon.innerText = '🔒';
-                btnText.innerText = 'Hide Model Evaluation Metrics';
-
-                if (!cachedMetadata) {
-                    await loadModelMetadata();
-                } else {
-                    updateExplorerChart();
-                }
-            } else {
-                explorerSec.style.display = 'none';
-                btnIcon.innerText = '🔍';
-                btnText.innerText = 'Explore Model Evaluation Metrics';
-            }
-        }
-
-        async function loadModelMetadata() {
-            try {
-                const response = await fetch('/metadata');
-                const data = await response.json();
-                if (data.success && data.models) {
-                    cachedMetadata = data.models;
-                    updateExplorerChart();
-                }
-            } catch (err) {
-                console.error('Failed to load metadata:', err);
-            }
-        }
-
-        /* Updated Explorer Chart */
-        function updateExplorerChart() {
-            if (!cachedMetadata || cachedMetadata.length === 0) return;
-
-            const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
-            const tickColor = isDark ? '#94a3b8' : '#6c757d';
-            const gridColor = isDark ? '#334155' : '#e9ecef';
-            const labelColor = isDark ? '#f8fafc' : '#212529';
-
-            const metric1Key = document.getElementById('metricSelect1').value;
-            const metric2Key = document.getElementById('metricSelect2').value;
-
-            const labels = cachedMetadata.map(m => m.model_name);
-            const metric1Data = cachedMetadata.map(m => (m.metrics && m.metrics[metric1Key] !== undefined) ? m.metrics[metric1Key] : 0);
-
-            const primaryBgColors = labels.map((name, idx) => getModelColors(name, idx).bg);
-            const primaryBorderColors = labels.map((name, idx) => getModelColors(name, idx).border);
-
-            const datasets = [
-                {
-                    label: metric1Key,
-                    data: metric1Data,
-                    backgroundColor: primaryBgColors,
-                    borderColor: primaryBorderColors,
-                    borderWidth: 1.5,
-                    borderRadius: 6,
-                    maxBarThickness: metric2Key !== 'none' ? 30 : 45
-                }
-            ];
-
-            if (metric2Key !== 'none') {
-                const metric2Data = cachedMetadata.map(m => (m.metrics && m.metrics[metric2Key] !== undefined) ? m.metrics[metric2Key] : 0);
-                const secondaryBgColors = labels.map((name, idx) => getModelColors(name, idx).secondaryBg);
-
-                datasets.push({
-                    label: metric2Key,
-                    data: metric2Data,
-                    backgroundColor: secondaryBgColors,
-                    borderColor: primaryBorderColors,
-                    borderWidth: 1.5,
-                    borderRadius: 6,
-                    maxBarThickness: 30
-                });
-            }
-
-            let allActiveValues = [...metric1Data];
-            if (metric2Key !== 'none') {
-                allActiveValues = allActiveValues.concat(cachedMetadata.map(m => m.metrics?.[metric2Key] || 0));
-            }
-            const maxVal = Math.max(...allActiveValues);
-
-            const canvas = document.getElementById('explorerChart');
-            const ctx = canvas.getContext('2d');
-
-            if (explorerChart) explorerChart.destroy();
-
-            explorerChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: datasets
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: { duration: 400 },
-                    layout: { padding: { top: 25 } },
-                    scales: {
-                        x: {
-                            grid: { display: false },
-                            ticks: { font: { size: 12, weight: '600' }, color: labelColor }
-                        },
-                        y: {
-                            suggestedMax: maxVal > 0 ? maxVal * 1.15 : 1,
-                            grid: { color: gridColor, strokeDash: [4, 4] },
-                            ticks: { font: { size: 11 }, color: tickColor }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'top',
-                            labels: { font: { size: 12, weight: '600' }, color: labelColor }
-                        },
-                        datalabels: {
-                            anchor: 'end',
-                            align: 'top',
-                            offset: 2,
-                            font: { weight: 'bold', size: 11 },
-                            color: labelColor,
-                            formatter: function (value) {
-                                if (typeof value !== 'number') return 'N/A';
-                                return value < 1 ? value.toFixed(4) : value.toFixed(2);
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const inputs = document.querySelectorAll('.live-input');
-
-            inputs.forEach(input => {
-                if (input.type === 'range') {
-                    input.addEventListener('input', (e) => {
-                        const id = e.target.id;
-                        const val = e.target.value;
-                        const suffix = (id === 'study_time_hours' || id === 'sleep_hours') ? ' hrs' : '';
-                        updateLabel(id, val + suffix);
-                    });
-
-                    input.addEventListener('change', runPrediction);
-                } else {
-                    input.addEventListener('change', runPrediction);
-                }
-            });
-
-            const radarTabBtn = document.getElementById('radar-tab');
-            if (radarTabBtn) {
-                radarTabBtn.addEventListener('shown.bs.tab', () => {
-                    if (predictionChart) predictionChart.resize();
-                });
-            }
-
-            runPrediction();
-        });
-
-        function exportBatchTableToCSV(filename = 'batch_analysis_results.csv') {
-            console.group("--- [DEBUG] CSV Export Started ---");
-            console.log("Export requested with filename:", filename);
-            console.log("Current batch data object state:", currentBatchData);
-
-            // Fallback to table extraction if full batch data isn't available
-            if (!currentBatchData || !currentBatchData.sample_row_predictions || currentBatchData.sample_row_predictions.length === 0) {
-                console.warn("[DEBUG ERROR] Export failed: No batch dataset available in 'currentBatchData'.");
-                alert('No batch dataset available to export.');
-                console.groupEnd();
-                return;
-            }
-
-            // Determine dataset rows (use full set if available, or sample rows as fallback)
-            const records = currentBatchData.full_row_predictions || currentBatchData.sample_row_predictions;
-            console.log(`Processing ${records.length} records for export (Source: ${currentBatchData.full_row_predictions ? 'full_row_predictions' : 'sample_row_predictions'})`);
-
-            const firstSample = records[0];
-            const modelNames = Object.keys(firstSample.predictions || {});
-            console.log("Detected models for evaluation columns:", modelNames);
-
-            let csvRows = [];
-
-            // Define fixed input columns with matching JSON object keys
-            const inputColumns = [
-                { header: 'Gender', key: 'gender' },
-                { header: 'Study Hrs', key: 'study_time_hours' },
-                { header: 'Attendance', key: 'attendance_percent' },
-                { header: 'Sleep Hrs', key: 'sleep_hours' },
-                { header: 'Parental Education', key: 'parental_education' },
-                { header: 'Internet Access', key: 'internet_access' },
-                { header: 'Extracurricular Activities', key: 'extracurricular_activities' },
-                { header: 'Part Time Job', key: 'part_time_job' },
-                { header: 'Prev Score', key: 'previous_grade' }
-            ];
-
-            // 1. Build Header Row
-            const headers = ['# Row'];
-            inputColumns.forEach(col => headers.push(col.header));
-
-            modelNames.forEach(model => {
-                headers.push(`${model} Score`);
-                headers.push(`${model} Grade`);
-            });
-
-            console.log("Constructed CSV Headers:", headers);
-            csvRows.push(headers.map(h => `"${String(h).replace(/"/g, '""')}"`).join(','));
-
-            // 2. Build Data Rows
-            records.forEach((item, index) => {
-                const inp = item.inputs || {};
-                const rowData = [item.row_index];
-
-                // Safely pull input values strictly following defined column order
-                inputColumns.forEach(col => {
-                    const val = inp[col.key];
-                    rowData.push(val !== undefined && val !== null ? val : '');
-                });
-
-                // Pull model prediction results
-                modelNames.forEach(model => {
-                    const pred = item.predictions ? item.predictions[model] : null;
-                    if (pred && pred.score !== 'N/A' && pred.score !== undefined) {
-                        rowData.push(pred.score);
-                        rowData.push(pred.grade);
-                    } else {
-                        rowData.push('N/A');
-                        rowData.push('N/A');
-                    }
-                });
-
-                // Print first 3 rows as samples in the console
-                if (index < 3) {
-                    console.log(`[DEBUG] Processed Row #${item.row_index}:`, rowData);
-                }
-
-                csvRows.push(rowData.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','));
-            });
-
-            console.log(`Successfully formatted ${csvRows.length - 1} data rows into CSV string.`);
-
-            // 3. Trigger File Download
-            try {
-                const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
-                const url = URL.createObjectURL(blob);
-                const downloadLink = document.createElement('a');
-
-                downloadLink.href = url;
-                downloadLink.setAttribute('download', filename);
-                document.body.appendChild(downloadLink);
-                downloadLink.click();
-
-                document.body.removeChild(downloadLink);
-                URL.revokeObjectURL(url);
-                console.log("[DEBUG SUCCESS] CSV File download initiated successfully.");
-            } catch (err) {
-                console.error("[DEBUG ERROR] Failed to initiate file download blob:", err);
-            }
-
-            console.groupEnd();
-        }
-
-        // Render or update the radar chart inside the tooltip container
-        function renderRowRadarTooltip(modelPredictions) {
-            const canvas = document.getElementById('rowRadarCanvas');
-            const ctx = canvas.getContext('2d');
-            const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
-
-            const labels = Object.keys(modelPredictions);
-            const scores = labels.map(m => {
-                const scoreVal = modelPredictions[m]?.score;
-                return typeof scoreVal === 'number' ? scoreVal : 0;
-            });
-
-            const minVal = Math.min(...scores);
-            const maxVal = Math.max(...scores);
-            const rMin = Math.max(0, Math.floor(minVal - 5));
-            const rMax = Math.min(100, Math.ceil(maxVal + 5));
-
-            if (rowRadarChart) {
-                rowRadarChart.destroy();
-            }
-
-            rowRadarChart = new Chart(ctx, {
-                type: 'radar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Prediction',
-                        data: scores,
-                        backgroundColor: isDark ? 'rgba(13, 110, 253, 0.35)' : 'rgba(13, 110, 253, 0.2)',
-                        borderColor: '#0d6efd',
-                        borderWidth: 2,
-                        pointBackgroundColor: labels.map((name, idx) => getModelColors(name, idx).bg),
-                        pointRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: false,
-                    scales: {
-                        r: {
-                            min: rMin,
-                            max: rMax,
-                            ticks: {
-                                display: false,
-                                stepSize: Math.ceil((rMax - rMin) / 3) || 5,
-                            },
-                            grid: { color: isDark ? '#334155' : '#e9ecef' },
-                            pointLabels: {
-                                font: { size: 9, weight: '600' },
-                                color: isDark ? '#f8fafc' : '#212529'
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: { display: false },
-                        // Enabled and styled datalabels to show exact values at each point
-                        datalabels: {
-                            display: true,
-                            align: 'top',
-                            anchor: 'end',
-                            offset: 2,
-                            color: isDark ? '#ffffff' : '#0d6efd',
-                            font: {
-                                size: 10,
-                                weight: 'bold'
-                            },
-                            formatter: function (value) {
-                                return typeof value === 'number' ? value.toFixed(1) : value;
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Adjust tooltip position dynamically relative to cursor position
-        function updateTooltipPosition(e) {
-            const tooltipWidth = 280;
-            const tooltipHeight = 280;
-            const offset = 15;
-
-            let left = e.pageX + offset;
-            let top = e.pageY + offset;
-
-            // Prevent rendering outside right edge of the viewport
-            if (left + tooltipWidth > window.innerWidth + window.scrollX) {
-                left = e.pageX - tooltipWidth - offset;
-            }
-
-            // Prevent rendering outside bottom edge of the viewport
-            if (top + tooltipHeight > window.innerHeight + window.scrollY) {
-                top = e.pageY - tooltipHeight - offset;
-            }
-
-            tooltipContainer.style.left = `${left}px`;
-            tooltipContainer.style.top = `${top}px`;
-        }
-
-    </script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 
 </html>
