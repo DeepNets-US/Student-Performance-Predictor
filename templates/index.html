@@ -277,6 +277,20 @@
         [data-bs-theme="dark"] .table-hover tbody tr:hover td {
             background-color: rgba(255, 255, 255, 0.05) !important;
         }
+
+        .rowRadarTooltip {
+            display: none;
+            position: absolute;
+            z-index: 1050;
+            width: 280px;
+            height: 280px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+            padding: 10px;
+            pointer-events: none;
+        }
     </style>
 
 </head>
@@ -284,6 +298,11 @@
 <body>
 
     <div class="container-fluid px-4 py-4 position-relative">
+
+        <!-- Floating Radar Chart Tooltip Container -->
+        <div id="rowRadarTooltip" class='rowRadarTooltip'>
+            <canvas id="rowRadarCanvas"></canvas>
+        </div>
 
         <!-- Dark Mode Switcher Button -->
         <button class="btn btn-sm btn-outline-secondary dark-mode-toggle" id="themeToggleBtn" onclick="toggleTheme()">
@@ -735,6 +754,8 @@
         let cachedMetadata = null;
         let currentPredictions = [];
         let currentBatchData = null; // Stores entire batch dataset for export
+        let rowRadarChart = null;
+        const tooltipContainer = document.getElementById('rowRadarTooltip');
 
         // Dynamic CSV Upload Functionality
         async function handleCSVUpload(event) {
@@ -798,17 +819,17 @@
 
             // Construct Dynamic Table Headers (Schema Order)
             headerRow.innerHTML = `
-        <th scope="col" class="text-nowrap">#</th>
-        <th scope="col" class="text-nowrap">Gender</th>
-        <th scope="col" class="text-nowrap">Study Hrs</th>
-        <th scope="col" class="text-nowrap">Attendance (%)</th>
-        <th scope="col" class="text-nowrap">Sleep Hrs</th>
-        <th scope="col" class="text-nowrap">Parental Edu.</th>
-        <th scope="col" class="text-nowrap">Internet Access</th>
-        <th scope="col" class="text-nowrap">Extracurriculars</th>
-        <th scope="col" class="text-nowrap">Part-Time Job</th>
-        <th scope="col" class="text-nowrap">Prev Grade</th>
-    `;
+                <th scope="col" class="text-nowrap">#</th>
+                <th scope="col" class="text-nowrap">Gender</th>
+                <th scope="col" class="text-nowrap">Study Hrs</th>
+                <th scope="col" class="text-nowrap">Attendance (%)</th>
+                <th scope="col" class="text-nowrap">Sleep Hrs</th>
+                <th scope="col" class="text-nowrap">Parental Edu.</th>
+                <th scope="col" class="text-nowrap">Internet Access</th>
+                <th scope="col" class="text-nowrap">Extracurriculars</th>
+                <th scope="col" class="text-nowrap">Part-Time Job</th>
+                <th scope="col" class="text-nowrap">Prev Grade</th>
+            `;
 
             // Append separate Score and Grade headers for each model
             modelNames.forEach(model => {
@@ -830,20 +851,21 @@
             tbody.innerHTML = '';
             data.sample_row_predictions.forEach(item => {
                 const tr = document.createElement('tr');
+                tr.style.cursor = 'pointer'; // Visual indicator for hoverable row
                 const inp = item.inputs;
 
                 let rowHtml = `
-            <td class="fw-bold">${item.row_index}</td>
-            <td>${inp.gender || '-'}</td>
-            <td>${inp.study_time_hours !== undefined ? inp.study_time_hours : '-'}</td>
-            <td>${inp.attendance_percent !== undefined ? inp.attendance_percent : '-'}</td>
-            <td>${inp.sleep_hours !== undefined ? inp.sleep_hours : '-'}</td>
-            <td>${inp.parental_education || '-'}</td>
-            <td>${inp.internet_access || '-'}</td>
-            <td>${inp.extracurricular_activities || '-'}</td>
-            <td>${inp.part_time_job || '-'}</td>
-            <td>${inp.previous_grade !== undefined ? inp.previous_grade : '-'}</td>
-        `;
+                    <td class="fw-bold">${item.row_index}</td>
+                    <td>${inp.gender || '-'}</td>
+                    <td>${inp.study_time_hours !== undefined ? inp.study_time_hours : '-'}</td>
+                    <td>${inp.attendance_percent !== undefined ? inp.attendance_percent : '-'}</td>
+                    <td>${inp.sleep_hours !== undefined ? inp.sleep_hours : '-'}</td>
+                    <td>${inp.parental_education || '-'}</td>
+                    <td>${inp.internet_access || '-'}</td>
+                    <td>${inp.extracurricular_activities || '-'}</td>
+                    <td>${inp.part_time_job || '-'}</td>
+                    <td>${inp.previous_grade !== undefined ? inp.previous_grade : '-'}</td>
+                `;
 
                 // Render separate Score and Grade cells for each model
                 modelNames.forEach(model => {
@@ -862,6 +884,21 @@
                 });
 
                 tr.innerHTML = rowHtml;
+
+                // --- Add Mouse Hover Event Handlers ---
+                tr.addEventListener('mouseenter', (e) => {
+                    renderRowRadarTooltip(item.predictions);
+                    tooltipContainer.style.display = 'block';
+                    updateTooltipPosition(e);
+                });
+
+                tr.addEventListener('mousemove', (e) => {
+                    updateTooltipPosition(e);
+                });
+
+                tr.addEventListener('mouseleave', () => {
+                    tooltipContainer.style.display = 'none';
+                });
                 tbody.appendChild(tr);
             });
 
@@ -1390,6 +1427,105 @@
             }
 
             console.groupEnd();
+        }
+
+        // Render or update the radar chart inside the tooltip container
+        function renderRowRadarTooltip(modelPredictions) {
+            const canvas = document.getElementById('rowRadarCanvas');
+            const ctx = canvas.getContext('2d');
+            const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+
+            const labels = Object.keys(modelPredictions);
+            const scores = labels.map(m => {
+                const scoreVal = modelPredictions[m]?.score;
+                return typeof scoreVal === 'number' ? scoreVal : 0;
+            });
+
+            const minVal = Math.min(...scores);
+            const maxVal = Math.max(...scores);
+            const rMin = Math.max(0, Math.floor(minVal - 5));
+            const rMax = Math.min(100, Math.ceil(maxVal + 5));
+
+            if (rowRadarChart) {
+                rowRadarChart.destroy();
+            }
+
+            rowRadarChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Prediction',
+                        data: scores,
+                        backgroundColor: isDark ? 'rgba(13, 110, 253, 0.35)' : 'rgba(13, 110, 253, 0.2)',
+                        borderColor: '#0d6efd',
+                        borderWidth: 2,
+                        pointBackgroundColor: labels.map((name, idx) => getModelColors(name, idx).bg),
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    scales: {
+                        r: {
+                            min: rMin,
+                            max: rMax,
+                            ticks: {
+                                display: false,
+                                stepSize: Math.ceil((rMax - rMin) / 3) || 5,
+                            },
+                            grid: { color: isDark ? '#334155' : '#e9ecef' },
+                            pointLabels: {
+                                font: { size: 9, weight: '600' },
+                                color: isDark ? '#f8fafc' : '#212529'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        // Enabled and styled datalabels to show exact values at each point
+                        datalabels: {
+                            display: true,
+                            align: 'top',
+                            anchor: 'end',
+                            offset: 2,
+                            color: isDark ? '#ffffff' : '#0d6efd',
+                            font: {
+                                size: 10,
+                                weight: 'bold'
+                            },
+                            formatter: function (value) {
+                                return typeof value === 'number' ? value.toFixed(1) : value;
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Adjust tooltip position dynamically relative to cursor position
+        function updateTooltipPosition(e) {
+            const tooltipWidth = 280;
+            const tooltipHeight = 280;
+            const offset = 15;
+
+            let left = e.pageX + offset;
+            let top = e.pageY + offset;
+
+            // Prevent rendering outside right edge of the viewport
+            if (left + tooltipWidth > window.innerWidth + window.scrollX) {
+                left = e.pageX - tooltipWidth - offset;
+            }
+
+            // Prevent rendering outside bottom edge of the viewport
+            if (top + tooltipHeight > window.innerHeight + window.scrollY) {
+                top = e.pageY - tooltipHeight - offset;
+            }
+
+            tooltipContainer.style.left = `${left}px`;
+            tooltipContainer.style.top = `${top}px`;
         }
 
     </script>
