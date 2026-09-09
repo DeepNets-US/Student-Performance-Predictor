@@ -1291,53 +1291,68 @@
         });
 
         function exportBatchTableToCSV(filename = 'batch_analysis_results.csv') {
+            console.group("--- [DEBUG] CSV Export Started ---");
+            console.log("Export requested with filename:", filename);
+            console.log("Current batch data object state:", currentBatchData);
+
             // Fallback to table extraction if full batch data isn't available
             if (!currentBatchData || !currentBatchData.sample_row_predictions || currentBatchData.sample_row_predictions.length === 0) {
+                console.warn("[DEBUG ERROR] Export failed: No batch dataset available in 'currentBatchData'.");
                 alert('No batch dataset available to export.');
+                console.groupEnd();
                 return;
             }
 
             // Determine dataset rows (use full set if available, or sample rows as fallback)
             const records = currentBatchData.full_row_predictions || currentBatchData.sample_row_predictions;
+            console.log(`Processing ${records.length} records for export (Source: ${currentBatchData.full_row_predictions ? 'full_row_predictions' : 'sample_row_predictions'})`);
+
             const firstSample = records[0];
-            const modelNames = Object.keys(firstSample.predictions);
+            const modelNames = Object.keys(firstSample.predictions || {});
+            console.log("Detected models for evaluation columns:", modelNames);
 
             let csvRows = [];
 
-            // 1. Build Header Row
-            const headers = [
-                '# Row',
-                'Gender',
-                'Parental Edu.',
-                'Study Hrs',
-                'Attendance',
-                'Sleep Hrs',
-                'Prev Score'
+            // Define fixed input columns with matching JSON object keys
+            const inputColumns = [
+                { header: 'Gender', key: 'gender' },
+                { header: 'Study Hrs', key: 'study_time_hours' },
+                { header: 'Attendance', key: 'attendance_percent' },
+                { header: 'Sleep Hrs', key: 'sleep_hours' },
+                { header: 'Parental Education', key: 'parental_education' },
+                { header: 'Internet Access', key: 'internet_access' },
+                { header: 'Extracurricular Activities', key: 'extracurricular_activities' },
+                { header: 'Part Time Job', key: 'part_time_job' },
+                { header: 'Prev Score', key: 'previous_grade' }
             ];
+
+            // 1. Build Header Row
+            const headers = ['# Row'];
+            inputColumns.forEach(col => headers.push(col.header));
 
             modelNames.forEach(model => {
                 headers.push(`${model} Score`);
                 headers.push(`${model} Grade`);
             });
 
-            csvRows.push(headers.map(h => `"${h.replace(/"/g, '""')}"`).join(','));
+            console.log("Constructed CSV Headers:", headers);
+            csvRows.push(headers.map(h => `"${String(h).replace(/"/g, '""')}"`).join(','));
 
             // 2. Build Data Rows
-            records.forEach(item => {
+            records.forEach((item, index) => {
                 const inp = item.inputs || {};
-                const rowData = [
-                    item.row_index,
-                    inp.gender ?? '',
-                    inp.parental_education ?? '',
-                    inp.study_time_hours ?? '',
-                    inp.attendance_percent ?? '',
-                    inp.sleep_hours ?? '',
-                    inp.previous_grade ?? ''
-                ];
+                const rowData = [item.row_index];
 
+                // Safely pull input values strictly following defined column order
+                inputColumns.forEach(col => {
+                    const val = inp[col.key];
+                    rowData.push(val !== undefined && val !== null ? val : '');
+                });
+
+                // Pull model prediction results
                 modelNames.forEach(model => {
                     const pred = item.predictions ? item.predictions[model] : null;
-                    if (pred && pred.score !== 'N/A') {
+                    if (pred && pred.score !== 'N/A' && pred.score !== undefined) {
                         rowData.push(pred.score);
                         rowData.push(pred.grade);
                     } else {
@@ -1346,21 +1361,35 @@
                     }
                 });
 
+                // Print first 3 rows as samples in the console
+                if (index < 3) {
+                    console.log(`[DEBUG] Processed Row #${item.row_index}:`, rowData);
+                }
+
                 csvRows.push(rowData.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','));
             });
 
+            console.log(`Successfully formatted ${csvRows.length - 1} data rows into CSV string.`);
+
             // 3. Trigger File Download
-            const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const downloadLink = document.createElement('a');
+            try {
+                const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const downloadLink = document.createElement('a');
 
-            downloadLink.href = url;
-            downloadLink.setAttribute('download', filename);
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
+                downloadLink.href = url;
+                downloadLink.setAttribute('download', filename);
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
 
-            document.body.removeChild(downloadLink);
-            URL.revokeObjectURL(url);
+                document.body.removeChild(downloadLink);
+                URL.revokeObjectURL(url);
+                console.log("[DEBUG SUCCESS] CSV File download initiated successfully.");
+            } catch (err) {
+                console.error("[DEBUG ERROR] Failed to initiate file download blob:", err);
+            }
+
+            console.groupEnd();
         }
 
     </script>
